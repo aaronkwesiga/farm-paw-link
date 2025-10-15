@@ -22,15 +22,15 @@ const Dashboard = () => {
           return;
         }
 
-        const { data: profile } = await supabase
-          .from("profiles")
+        const { data: userRoles } = await supabase
+          .from("user_roles")
           .select("role")
-          .eq("user_id", session.user.id)
-          .single();
+          .eq("user_id", session.user.id);
 
-        if (profile) {
-          setUserRole(profile.role);
-          if (profile.role === "veterinarian") {
+        if (userRoles && userRoles.length > 0) {
+          const role = userRoles[0].role;
+          setUserRole(role);
+          if (role === "veterinarian") {
             navigate("/dashboard/vet");
           } else {
             navigate("/dashboard/farmer");

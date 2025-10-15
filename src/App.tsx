@@ -9,6 +9,9 @@ import Register from "./pages/auth/Register";
 import Dashboard from "./pages/Dashboard";
 import FarmerDashboard from "./pages/dashboard/FarmerDashboard";
 import VetDashboard from "./pages/dashboard/VetDashboard";
+import NewConsultation from "./pages/consultation/NewConsultation";
+import ConsultationDetail from "./pages/consultation/ConsultationDetail";
+import AnimalsManagement from "./pages/animals/AnimalsManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +29,9 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/farmer" element={<FarmerDashboard />} />
           <Route path="/dashboard/vet" element={<VetDashboard />} />
+          <Route path="/consultation/new" element={<NewConsultation />} />
+          <Route path="/consultation/:id" element={<ConsultationDetail />} />
+          <Route path="/animals" element={<AnimalsManagement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
