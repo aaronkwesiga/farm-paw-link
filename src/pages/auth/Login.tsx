@@ -67,8 +67,21 @@ const Login = () => {
         return;
       }
 
-      // MFA is enabled - require TOTP verification
+      // MFA is enabled - sign out and require TOTP verification
+      await supabase.auth.signOut();
+      
       const factor = factors.totp[0];
+      
+      // Sign in again to get a fresh session for MFA challenge
+      const { error: signInError2 } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError2) {
+        throw signInError2;
+      }
+
       const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId: factor.id,
       });
@@ -77,6 +90,9 @@ const Login = () => {
         throw challengeError;
       }
 
+      // Sign out again until MFA is verified
+      await supabase.auth.signOut();
+      
       setFactorId(factor.id);
       toast({
         title: "Enter Authenticator Code",
@@ -111,14 +127,36 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.mfa.verify({
+      // Sign in again with password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      // Create MFA challenge
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId: factorId,
-        challengeId: factorId,
+      });
+
+      if (challengeError) {
+        await supabase.auth.signOut();
+        throw challengeError;
+      }
+
+      // Verify the TOTP code
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: factorId,
+        challengeId: challengeData.id,
         code: otp,
       });
 
-      if (error) {
-        throw error;
+      if (verifyError) {
+        await supabase.auth.signOut();
+        throw verifyError;
       }
 
       toast({
