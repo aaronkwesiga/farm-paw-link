@@ -20,11 +20,12 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"credentials" | "otp">("credentials");
+  const [step, setStep] = useState<"credentials" | "totp">("credentials");
+  const [factorId, setFactorId] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleSendTOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
@@ -43,8 +44,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // First verify credentials
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Sign in with password
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
@@ -53,41 +54,54 @@ const Login = () => {
         throw signInError;
       }
 
-      // Sign out immediately after verifying credentials
-      await supabase.auth.signOut();
-
-      // Send OTP to email
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-      });
-
-      if (otpError) {
-        throw otpError;
+      // Check if user has MFA enrolled
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      
+      if (!factors || factors.totp.length === 0) {
+        toast({
+          title: "MFA Not Enabled",
+          description: "Please enable Google Authenticator in your profile settings first",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        return;
       }
 
+      // Create MFA challenge
+      const factor = factors.totp[0];
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: factor.id,
+      });
+
+      if (challengeError) {
+        throw challengeError;
+      }
+
+      setFactorId(factor.id);
       toast({
-        title: "OTP Sent",
-        description: "Check your email for the verification code",
+        title: "Enter Authenticator Code",
+        description: "Open Google Authenticator and enter the 6-digit code",
       });
       
-      setStep("otp");
+      setStep("totp");
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to send OTP",
+        description: error.message || "Failed to initiate login",
         variant: "destructive",
       });
+      await supabase.auth.signOut();
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
+  const handleVerifyTOTP = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (otp.length !== 6) {
       toast({
-        title: "Invalid OTP",
+        title: "Invalid Code",
         description: "Please enter a 6-digit code",
         variant: "destructive",
       });
@@ -97,27 +111,25 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otp,
-        type: 'email',
+      const { data, error } = await supabase.auth.mfa.verify({
+        factorId: factorId,
+        challengeId: factorId,
+        code: otp,
       });
 
       if (error) {
         throw error;
       }
 
-      if (data.session) {
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        });
-        navigate("/dashboard");
-      }
+      toast({
+        title: "Success",
+        description: "Logged in successfully with Google Authenticator",
+      });
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Invalid OTP code",
+        description: error.message || "Invalid authenticator code",
         variant: "destructive",
       });
     } finally {
@@ -138,17 +150,17 @@ const Login = () => {
             <Stethoscope className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">
-            {step === "credentials" ? "Welcome Back" : "Enter OTP"}
+            {step === "credentials" ? "Welcome Back" : "Authenticator Code"}
           </CardTitle>
           <CardDescription>
             {step === "credentials" 
               ? "Login to access your VetConnect account" 
-              : "Enter the 6-digit code sent to your email"}
+              : "Enter the 6-digit code from Google Authenticator"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {step === "credentials" ? (
-            <form onSubmit={handleSendOTP} className="space-y-4">
+            <form onSubmit={handleSendTOTP} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -174,7 +186,7 @@ const Login = () => {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending OTP..." : "Continue with OTP"}
+                {loading ? "Verifying..." : "Continue with Authenticator"}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
@@ -185,7 +197,7 @@ const Login = () => {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-4">
+            <form onSubmit={handleVerifyTOTP} className="space-y-4">
               <Button
                 type="button"
                 variant="ghost"

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import MFASetup from "./pages/auth/MFASetup";
 import Dashboard from "./pages/Dashboard";
 import FarmerDashboard from "./pages/dashboard/FarmerDashboard";
 import VetDashboard from "./pages/dashboard/VetDashboard";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/mfa-setup" element={<MFASetup />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/farmer" element={<FarmerDashboard />} />
           <Route path="/dashboard/vet" element={<VetDashboard />} />
