@@ -58,16 +58,16 @@ const Login = () => {
       const { data: factors } = await supabase.auth.mfa.listFactors();
       
       if (!factors || factors.totp.length === 0) {
+        // MFA not enabled - allow login without it
         toast({
-          title: "MFA Not Enabled",
-          description: "Please enable Google Authenticator in your profile settings first",
-          variant: "destructive",
+          title: "Login Successful",
+          description: "Consider enabling Google Authenticator for extra security",
         });
-        await supabase.auth.signOut();
+        navigate("/dashboard");
         return;
       }
 
-      // Create MFA challenge
+      // MFA is enabled - require TOTP verification
       const factor = factors.totp[0];
       const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId: factor.id,
@@ -226,7 +226,7 @@ const Login = () => {
                   </InputOTPGroup>
                 </InputOTP>
                 <p className="text-sm text-muted-foreground">
-                  Code sent to {email}
+                  Enter code from Google Authenticator
                 </p>
               </div>
 
