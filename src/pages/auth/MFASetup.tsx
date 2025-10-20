@@ -88,9 +88,8 @@ const MFASetup = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.mfa.verify({
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
         factorId: factorId,
-        challengeId: factorId,
         code: verificationCode,
       });
 
