@@ -115,7 +115,7 @@ const Login = () => {
 
     try {
       // Verify the TOTP code with the stored challenge ID
-      const { error: verifyError } = await supabase.auth.mfa.verify({
+      const { data, error: verifyError } = await supabase.auth.mfa.verify({
         factorId: factorId,
         challengeId: challengeId,
         code: otp,
@@ -123,6 +123,14 @@ const Login = () => {
 
       if (verifyError) {
         throw verifyError;
+      }
+
+      // Ensure session is properly set after MFA verification
+      if (data.access_token && data.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
       }
 
       toast({
