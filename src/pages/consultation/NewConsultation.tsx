@@ -270,9 +270,12 @@ const NewConsultation = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="images">Upload Images (Optional)</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
+                <label 
+                  htmlFor="images" 
+                  className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer block"
+                >
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <Input
+                  <input
                     id="images"
                     type="file"
                     accept="image/*"
@@ -280,17 +283,15 @@ const NewConsultation = () => {
                     onChange={handleImageChange}
                     className="hidden"
                   />
-                  <Label htmlFor="images" className="cursor-pointer">
-                    <span className="text-sm text-muted-foreground">
-                      Click to upload images (max 5)
-                    </span>
-                  </Label>
+                  <span className="text-sm text-muted-foreground">
+                    Click to upload images (max 5)
+                  </span>
                   {images.length > 0 && (
                     <p className="text-sm text-primary mt-2">
                       {images.length} image(s) selected
                     </p>
                   )}
-                </div>
+                </label>
               </div>
 
               <div className="flex gap-4">
