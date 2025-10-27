@@ -74,12 +74,12 @@ const Profile = () => {
 
       const { error } = await supabase
         .from("profiles")
-        .upsert({
-          user_id: session.user.id,
+        .update({
           full_name: fullName,
           phone_number: phone,
           updated_at: new Date().toISOString(),
-        });
+        })
+        .eq("user_id", session.user.id);
 
       if (error) throw error;
 
