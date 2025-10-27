@@ -127,7 +127,7 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Phone</h3>
-                      <p className="text-muted-foreground">+1 (555) 123-4567</p>
+                      <p className="text-muted-foreground">0787681706</p>
                     </div>
                   </div>
 
@@ -140,9 +140,9 @@ const Contact = () => {
                     <div>
                       <h3 className="font-semibold mb-1">Location</h3>
                       <p className="text-muted-foreground">
-                        123 Farm Road<br />
-                        Agricultural District<br />
-                        Rural Valley, RV 12345
+                        23 FARM ROAD BYABASIITA<br />
+                        Agricultural Subcounty<br />
+                        Kahunge Town Council
                       </p>
                     </div>
                   </div>
