@@ -8,14 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, Shield, CheckCircle } from "lucide-react";
+import { Loader2, User, Shield, CheckCircle, Camera } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -36,13 +39,14 @@ const Profile = () => {
         
         const { data: profile } = await supabase
           .from("profiles")
-          .select("full_name, phone_number")
+          .select("full_name, phone_number, profile_image_url")
           .eq("user_id", session.user.id)
           .single();
 
         if (profile) {
           setFullName(profile.full_name || "");
           setPhone(profile.phone_number || "");
+          setProfileImageUrl(profile.profile_image_url || "");
         }
 
         // Check MFA status
@@ -57,6 +61,59 @@ const Profile = () => {
 
     loadProfile();
   }, [navigate]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        navigate("/auth/login");
+        return;
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${session.user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `${session.user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("animal-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("animal-images")
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ profile_image_url: publicUrl })
+        .eq("user_id", session.user.id);
+
+      if (updateError) throw updateError;
+
+      setProfileImageUrl(publicUrl);
+      toast({
+        title: "Profile photo updated",
+        description: "Your profile photo has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload profile photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +184,34 @@ const Profile = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="relative">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={profileImageUrl || undefined} alt="Profile" />
+                    <AvatarFallback>
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <label
+                    htmlFor="profile-image"
+                    className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
+                  >
+                    <Camera className="h-4 w-4" />
+                    <input
+                      id="profile-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {uploading && (
+                  <p className="text-sm text-muted-foreground">Uploading...</p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
