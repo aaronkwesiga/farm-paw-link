@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BackgroundVideo from "@/components/BackgroundVideo";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
@@ -49,7 +50,8 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col relative">
+        <BackgroundVideo />
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
