@@ -48,11 +48,13 @@ const VetDashboard = () => {
   const fetchDashboardData = async (userId: string) => {
     try {
       const [pendingRes, myRes] = await Promise.all([
+        // For pending consultations, fetch limited data to protect privacy
         supabase
           .from("consultations")
-          .select("*")
+          .select("id, urgency_level, created_at, status, animal_id")
           .eq("status", "pending")
           .order("created_at", { ascending: false }),
+        // For assigned consultations, fetch full details
         supabase
           .from("consultations")
           .select("*")
@@ -63,7 +65,17 @@ const VetDashboard = () => {
       if (pendingRes.error) throw pendingRes.error;
       if (myRes.error) throw myRes.error;
 
-      setPendingConsultations(pendingRes.data || []);
+      // For pending consultations, add placeholder data
+      const pendingWithLimitedInfo = (pendingRes.data || []).map(consultation => ({
+        ...consultation,
+        subject: consultation.urgency_level === 'emergency' 
+          ? 'Emergency case - immediate attention needed'
+          : 'Consultation request pending',
+        description: 'Details will be available after accepting the consultation',
+        farmer_id: '',
+      }));
+
+      setPendingConsultations(pendingWithLimitedInfo as Consultation[]);
       setMyConsultations(myRes.data || []);
     } catch (error: any) {
       toast({
@@ -236,13 +248,8 @@ const VetDashboard = () => {
                             onClick={() => handleAcceptConsultation(consultation.id)}
                             size="sm"
                           >
-                            Accept Case
+                            Accept Case to View Details
                           </Button>
-                          <Link to={`/consultation/${consultation.id}`}>
-                            <Button variant="outline" size="sm">
-                              View Details
-                            </Button>
-                          </Link>
                         </div>
                       </div>
                     ))}

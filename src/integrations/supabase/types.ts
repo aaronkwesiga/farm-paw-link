@@ -217,45 +217,7 @@ export type Database = {
       }
     }
     Views: {
-      pending_consultations_summary: {
-        Row: {
-          animal_id: string | null
-          created_at: string | null
-          description: string | null
-          farmer_id: string | null
-          id: string | null
-          image_urls: string[] | null
-          status: Database["public"]["Enums"]["consultation_status"] | null
-          subject: string | null
-          symptoms: string | null
-          urgency_level: string | null
-        }
-        Insert: {
-          animal_id?: string | null
-          created_at?: string | null
-          description?: never
-          farmer_id?: never
-          id?: string | null
-          image_urls?: never
-          status?: Database["public"]["Enums"]["consultation_status"] | null
-          subject?: never
-          symptoms?: never
-          urgency_level?: string | null
-        }
-        Update: {
-          animal_id?: string | null
-          created_at?: string | null
-          description?: never
-          farmer_id?: never
-          id?: string | null
-          image_urls?: never
-          status?: Database["public"]["Enums"]["consultation_status"] | null
-          subject?: never
-          symptoms?: never
-          urgency_level?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       has_role: {
