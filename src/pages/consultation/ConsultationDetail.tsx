@@ -7,9 +7,9 @@ import BackgroundVideo from "@/components/BackgroundVideo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Send } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MessagingPanel } from "@/components/consultation/MessagingPanel";
 
 type Consultation = {
   id: string;
@@ -28,28 +28,15 @@ type Consultation = {
   image_urls: string[] | null;
 };
 
-type Message = {
-  id: string;
-  message: string;
-  sender_id: string;
-  created_at: string;
-  attachment_url: string | null;
-};
-
 const ConsultationDetail = () => {
   const { id } = useParams();
   const [consultation, setConsultation] = useState<Consultation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
-    setupRealtimeSubscription();
   }, [id]);
 
   const fetchData = async () => {
@@ -61,8 +48,6 @@ const ConsultationDetail = () => {
       navigate("/auth/login");
       return;
     }
-
-    setCurrentUserId(session.user.id);
 
     const { data: consultData, error: consultError } = await supabase
       .from("consultations")
@@ -81,78 +66,7 @@ const ConsultationDetail = () => {
     }
 
     setConsultation(consultData);
-
-    const { data: messagesData, error: messagesError } = await supabase
-      .from("consultation_messages")
-      .select("*")
-      .eq("consultation_id", id)
-      .order("created_at", { ascending: true });
-
-    if (messagesError) {
-      toast({
-        title: "Error",
-        description: "Failed to load messages",
-        variant: "destructive",
-      });
-    } else {
-      setMessages(messagesData || []);
-    }
-
     setLoading(false);
-  };
-
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel(`consultation_${id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "consultation_messages",
-          filter: `consultation_id=eq.${id}`,
-        },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    setSending(true);
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) return;
-
-      const { error } = await supabase.from("consultation_messages").insert({
-        consultation_id: id,
-        sender_id: session.user.id,
-        message: newMessage.trim(),
-      });
-
-      if (error) throw error;
-
-      setNewMessage("");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
-        variant: "destructive",
-      });
-    } finally {
-      setSending(false);
-    }
   };
 
   if (loading) {
@@ -240,61 +154,7 @@ const ConsultationDetail = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Consultation Messages</CardTitle>
-              <CardDescription>Chat with your veterinarian</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4 max-h-[400px] overflow-y-auto p-4 border rounded-lg">
-                {messages.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No messages yet. Start the conversation!
-                  </p>
-                ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${
-                        message.sender_id === currentUserId ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
-                          message.sender_id === currentUserId
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        }`}
-                      >
-                        <p className="text-sm">{message.message}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {new Date(message.created_at).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="Type your message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  rows={3}
-                />
-                <Button onClick={handleSendMessage} disabled={sending || !newMessage.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <MessagingPanel consultationId={id!} />
 
           <Button variant="outline" onClick={() => navigate(-1)}>
             Back
