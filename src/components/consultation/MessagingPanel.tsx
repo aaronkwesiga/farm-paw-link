@@ -72,7 +72,7 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
         .from('consultation_messages')
         .select(`
           *,
-          sender:profiles!consultation_messages_sender_id_fkey(full_name)
+          sender:profiles(full_name)
         `)
         .eq('consultation_id', consultationId)
         .order('created_at', { ascending: true });
