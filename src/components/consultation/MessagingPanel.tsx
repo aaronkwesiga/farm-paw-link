@@ -68,17 +68,31 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: messagesData, error: messagesError } = await supabase
         .from('consultation_messages')
-        .select(`
-          *,
-          sender:profiles(full_name)
-        `)
+        .select('*')
         .eq('consultation_id', consultationId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      setMessages(data || []);
+      if (messagesError) throw messagesError;
+
+      // Fetch sender profiles
+      const senderIds = [...new Set(messagesData?.map(m => m.sender_id) || [])];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', senderIds);
+
+      if (profilesError) throw profilesError;
+
+      // Merge the data
+      const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
+      const enrichedMessages = messagesData?.map(msg => ({
+        ...msg,
+        sender: profilesMap.get(msg.sender_id),
+      })) || [];
+
+      setMessages(enrichedMessages);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
     }
