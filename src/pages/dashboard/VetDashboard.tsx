@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardList, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
 
 type Consultation = {
   id: string;
@@ -25,6 +26,7 @@ const VetDashboard = () => {
   const [pendingConsultations, setPendingConsultations] = useState<Consultation[]>([]);
   const [myConsultations, setMyConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vetProfile, setVetProfile] = useState<{ license_number: string | null; specialization: string | null } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -47,7 +49,7 @@ const VetDashboard = () => {
 
   const fetchDashboardData = async (userId: string) => {
     try {
-      const [pendingRes, myRes] = await Promise.all([
+      const [pendingRes, myRes, profileRes] = await Promise.all([
         // For pending consultations, fetch limited data to protect privacy
         supabase
           .from("consultations")
@@ -60,6 +62,12 @@ const VetDashboard = () => {
           .select("*")
           .eq("vet_id", userId)
           .order("created_at", { ascending: false }),
+        // Fetch vet profile
+        supabase
+          .from("profiles")
+          .select("license_number, specialization")
+          .eq("user_id", userId)
+          .maybeSingle(),
       ]);
 
       if (pendingRes.error) throw pendingRes.error;
@@ -77,6 +85,7 @@ const VetDashboard = () => {
 
       setPendingConsultations(pendingWithLimitedInfo as Consultation[]);
       setMyConsultations(myRes.data || []);
+      setVetProfile(profileRes.data);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -167,8 +176,18 @@ const VetDashboard = () => {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Veterinarian Dashboard</h1>
-          <p className="text-muted-foreground">Manage consultations and help farmers</p>
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Veterinarian Dashboard</h1>
+              <p className="text-muted-foreground">Manage consultations and help farmers</p>
+            </div>
+            {vetProfile && (
+              <VetVerificationBadge
+                licenseNumber={vetProfile.license_number}
+                specialization={vetProfile.specialization}
+              />
+            )}
+          </div>
         </div>
 
         {/* Stats */}
