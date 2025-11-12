@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MessagingPanel } from "@/components/consultation/MessagingPanel";
+import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
 
 type Consultation = {
   id: string;
@@ -28,9 +29,16 @@ type Consultation = {
   image_urls: string[] | null;
 };
 
+type VetProfile = {
+  full_name: string;
+  license_number: string | null;
+  specialization: string | null;
+};
+
 const ConsultationDetail = () => {
   const { id } = useParams();
   const [consultation, setConsultation] = useState<Consultation | null>(null);
+  const [vetProfile, setVetProfile] = useState<VetProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -66,6 +74,20 @@ const ConsultationDetail = () => {
     }
 
     setConsultation(consultData);
+
+    // Fetch vet profile if assigned
+    if (consultData.vet_id) {
+      const { data: vetData } = await supabase
+        .from("profiles")
+        .select("full_name, license_number, specialization")
+        .eq("user_id", consultData.vet_id)
+        .single();
+
+      if (vetData) {
+        setVetProfile(vetData);
+      }
+    }
+
     setLoading(false);
   };
 
@@ -113,11 +135,20 @@ const ConsultationDetail = () => {
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div>
+                <div className="space-y-2">
                   <CardTitle>{consultation.subject}</CardTitle>
                   <CardDescription>
                     Requested on {new Date(consultation.created_at).toLocaleDateString()}
                   </CardDescription>
+                  {vetProfile && (
+                    <div className="pt-2">
+                      <p className="text-sm font-medium mb-1">Assigned Veterinarian: {vetProfile.full_name}</p>
+                      <VetVerificationBadge
+                        licenseNumber={vetProfile.license_number}
+                        specialization={vetProfile.specialization}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   {getUrgencyBadge(consultation.urgency_level)}
