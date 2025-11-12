@@ -9,13 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { Loader2, User, Shield, CheckCircle, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -23,6 +23,7 @@ const Profile = () => {
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { uploadFiles, uploading } = useFileUpload();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -67,7 +68,6 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
     try {
       const {
         data: { session },
@@ -78,28 +78,22 @@ const Profile = () => {
         return;
       }
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${session.user.id}-${Math.random()}.${fileExt}`;
-      const filePath = `${session.user.id}/${fileName}`;
+      const uploadedUrls = await uploadFiles([file], {
+        bucket: 'animal-images',
+        folder: session.user.id,
+        maxFiles: 1,
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from("animal-images")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("animal-images")
-        .getPublicUrl(filePath);
+      if (uploadedUrls.length === 0) return;
 
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ profile_image_url: publicUrl })
+        .update({ profile_image_url: uploadedUrls[0] })
         .eq("user_id", session.user.id);
 
       if (updateError) throw updateError;
 
-      setProfileImageUrl(publicUrl);
+      setProfileImageUrl(uploadedUrls[0]);
       toast({
         title: "Profile photo updated",
         description: "Your profile photo has been updated successfully.",
@@ -111,8 +105,6 @@ const Profile = () => {
         description: "Failed to upload profile photo. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
     }
   };
 

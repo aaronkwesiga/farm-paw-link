@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { Loader2, Upload } from "lucide-react";
 import { z } from "zod";
 
@@ -40,6 +41,7 @@ const NewConsultation = () => {
   const [loadingAnimals, setLoadingAnimals] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { uploadFiles, uploading } = useFileUpload();
 
   useEffect(() => {
     const fetchAnimals = async () => {
@@ -112,29 +114,15 @@ const NewConsultation = () => {
         return;
       }
 
-      const imageUrls: string[] = [];
+      let imageUrls: string[] = [];
 
       // Upload images if any
       if (images.length > 0) {
-        for (const image of images) {
-          const fileExt = image.name.split(".").pop();
-          const fileName = `${Math.random()}.${fileExt}`;
-          const filePath = `${session.user.id}/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from("consultation-images")
-            .upload(filePath, image);
-
-          if (uploadError) {
-            throw uploadError;
-          }
-
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from("consultation-images").getPublicUrl(filePath);
-
-          imageUrls.push(publicUrl);
-        }
+        imageUrls = await uploadFiles(images, {
+          bucket: 'consultation-images',
+          folder: session.user.id,
+          maxFiles: 5,
+        });
       }
 
       const { error } = await supabase.from("consultations").insert({
@@ -306,11 +294,11 @@ const NewConsultation = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading || animals.length === 0} className="flex-1">
-                  {loading ? (
+                <Button type="submit" disabled={loading || uploading || animals.length === 0} className="flex-1">
+                  {(loading || uploading) ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
+                      {uploading ? "Uploading..." : "Submitting..."}
                     </>
                   ) : (
                     "Submit Request"
