@@ -105,13 +105,29 @@ const VetDashboard = () => {
 
       if (!session) return;
 
-      const { error } = await supabase
+      // Optimistic locking: only update if vet_id is still null
+      const { data, error } = await supabase
         .from("consultations")
         .update({
           vet_id: session.user.id,
           status: "in_progress",
         })
-        .eq("id", consultationId);
+        .eq("id", consultationId)
+        .is("vet_id", null) // Critical: only update unassigned consultations
+        .select()
+        .single();
+
+      // If no data returned, another vet already accepted this consultation
+      if (!data) {
+        toast({
+          title: "Consultation Unavailable",
+          description: "This consultation was already accepted by another veterinarian",
+          variant: "destructive",
+        });
+        // Refresh to remove from pending list
+        fetchDashboardData(session.user.id);
+        return;
+      }
 
       if (error) throw error;
 
