@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { Send, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
+import { getUserFriendlyError } from '@/lib/errorHandling';
 
 interface Message {
   id: string;
@@ -94,7 +95,11 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
 
       setMessages(enrichedMessages);
     } catch (error: any) {
-      console.error('Error fetching messages:', error);
+      toast({
+        title: "Error",
+        description: getUserFriendlyError(error, "messages_load"),
+        variant: "destructive",
+      });
     }
   };
 
@@ -115,11 +120,10 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
 
       setNewMessage('');
     } catch (error: any) {
-      console.error('Error sending message:', error);
       toast({
-        title: 'Failed to send message',
-        description: 'Please try again',
-        variant: 'destructive',
+        title: "Error",
+        description: getUserFriendlyError(error, "message_send"),
+        variant: "destructive",
       });
     } finally {
       setSending(false);

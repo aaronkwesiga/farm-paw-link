@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { getUserFriendlyError } from '@/lib/errorHandling';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -128,12 +129,11 @@ export const useFileUpload = () => {
       }
 
       return uploadedUrls;
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (error: any) {
       toast({
-        title: 'Upload error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
+        title: "Upload Error",
+        description: getUserFriendlyError(error, "file_upload"),
+        variant: "destructive",
       });
       return [];
     } finally {

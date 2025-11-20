@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Stethoscope, ArrowLeft } from "lucide-react";
 import { z } from "zod";
+import { getUserFriendlyError, getValidationError } from "@/lib/errorHandling";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -36,7 +37,7 @@ const Login = () => {
       if (error instanceof z.ZodError) {
         toast({
           title: "Validation Error",
-          description: error.errors[0].message,
+          description: getValidationError(error),
           variant: "destructive",
         });
         return;
@@ -91,7 +92,7 @@ const Login = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to initiate login",
+        description: getUserFriendlyError(error, "login"),
         variant: "destructive",
       });
       await supabase.auth.signOut();
@@ -142,7 +143,7 @@ const Login = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Invalid authenticator code",
+        description: getUserFriendlyError(error, "mfa_verification"),
         variant: "destructive",
       });
     } finally {

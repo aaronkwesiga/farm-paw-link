@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Plus, ClipboardList, PawPrint, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getUserFriendlyError } from "@/lib/errorHandling";
 
 type Consultation = {
   id: string;
@@ -70,7 +71,7 @@ const FarmerDashboard = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to load dashboard data",
+        description: getUserFriendlyError(error, "dashboard_load"),
         variant: "destructive",
       });
     } finally {

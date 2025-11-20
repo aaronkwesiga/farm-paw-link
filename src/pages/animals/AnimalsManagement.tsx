@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { PawPrint, Plus, Loader2, Trash2, Edit } from "lucide-react";
 import { z } from "zod";
+import { getValidationError } from "@/lib/errorHandling";
 
 const animalSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -101,7 +102,7 @@ const AnimalsManagement = () => {
       if (error instanceof z.ZodError) {
         toast({
           title: "Validation Error",
-          description: error.errors[0].message,
+          description: getValidationError(error),
           variant: "destructive",
         });
         return;

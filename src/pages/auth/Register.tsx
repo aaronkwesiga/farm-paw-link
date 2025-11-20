@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Stethoscope, User, UserCog } from "lucide-react";
 import { z } from "zod";
+import { getUserFriendlyError, getValidationError } from "@/lib/errorHandling";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -51,7 +52,7 @@ const Register = () => {
       if (error instanceof z.ZodError) {
         toast({
           title: "Validation Error",
-          description: error.errors[0].message,
+          description: getValidationError(error),
           variant: "destructive",
         });
         return;
@@ -87,7 +88,7 @@ const Register = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create account",
+        description: getUserFriendlyError(error, "registration"),
         variant: "destructive",
       });
     } finally {

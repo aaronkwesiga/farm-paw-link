@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardList, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
+import { getUserFriendlyError } from "@/lib/errorHandling";
 
 type Consultation = {
   id: string;
@@ -89,7 +90,7 @@ const VetDashboard = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to load dashboard data",
+        description: getUserFriendlyError(error, "dashboard_load"),
         variant: "destructive",
       });
     } finally {

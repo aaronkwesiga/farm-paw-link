@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { Loader2, User, Shield, CheckCircle, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getUserFriendlyError } from "@/lib/errorHandling";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -54,8 +55,12 @@ const Profile = () => {
         // Check MFA status
         const { data: factors } = await supabase.auth.mfa.listFactors();
         setMfaEnabled(factors?.totp.length > 0);
-      } catch (error) {
-        console.error("Error loading profile:", error);
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: getUserFriendlyError(error, "profile_load"),
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -98,11 +103,10 @@ const Profile = () => {
         title: "Profile photo updated",
         description: "Your profile photo has been updated successfully.",
       });
-    } catch (error) {
-      console.error("Error uploading image:", error);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to upload profile photo. Please try again.",
+        description: getUserFriendlyError(error, "profile_photo_upload"),
         variant: "destructive",
       });
     }
@@ -137,11 +141,10 @@ const Profile = () => {
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
-    } catch (error) {
-      console.error("Error updating profile:", error);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: getUserFriendlyError(error, "profile_update"),
         variant: "destructive",
       });
     } finally {
