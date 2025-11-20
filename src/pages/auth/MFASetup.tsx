@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getUserFriendlyError } from "@/lib/errorHandling";
 import { Smartphone, CheckCircle } from "lucide-react";
 
 const MFASetup = () => {
@@ -66,7 +67,7 @@ const MFASetup = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to generate QR code",
+        description: getUserFriendlyError(error, "mfa_enrollment"),
         variant: "destructive",
       });
     } finally {
@@ -106,7 +107,7 @@ const MFASetup = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Invalid verification code",
+        description: getUserFriendlyError(error, "mfa_verification"),
         variant: "destructive",
       });
     } finally {
