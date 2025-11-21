@@ -114,7 +114,7 @@ const Register = () => {
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Aaron kwesiga"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
