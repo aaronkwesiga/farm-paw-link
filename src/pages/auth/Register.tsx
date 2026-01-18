@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Stethoscope, User, UserCog } from "lucide-react";
+import { Stethoscope, User, UserCog, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { getUserFriendlyError, getValidationError } from "@/lib/errorHandling";
+import { authRateLimiter } from "@/lib/rateLimiting";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -33,6 +35,8 @@ const Register = () => {
     (searchParams.get("role") as any) || "farmer"
   );
   const [loading, setLoading] = useState(false);
+  const [rateLimitMessage, setRateLimitMessage] = useState("");
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -43,8 +47,34 @@ const Register = () => {
     }
   }, [searchParams]);
 
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    
+    const timer = setInterval(() => {
+      setLockoutSeconds(prev => {
+        if (prev <= 1) {
+          setRateLimitMessage("");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lockoutSeconds]);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check rate limit before attempting registration
+    const identifier = email.toLowerCase().trim();
+    const limitCheck = authRateLimiter.checkLimit(identifier);
+    if (limitCheck.limited) {
+      setRateLimitMessage(limitCheck.message);
+      setLockoutSeconds(limitCheck.remainingSeconds);
+      return;
+    }
 
     try {
       registerSchema.parse({ fullName, email, password, confirmPassword, role });
@@ -75,8 +105,19 @@ const Register = () => {
       });
 
       if (error) {
+        // Record failed attempt
+        const result = authRateLimiter.recordFailedAttempt(identifier);
+        if (result.locked) {
+          setRateLimitMessage(result.message);
+          setLockoutSeconds(result.remainingSeconds);
+        } else if (result.message) {
+          setRateLimitMessage(result.message);
+        }
         throw error;
       }
+
+      // Clear rate limit on success
+      authRateLimiter.recordSuccess(identifier);
 
       if (data.session) {
         toast({
@@ -109,6 +150,20 @@ const Register = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
+            {rateLimitMessage && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  {rateLimitMessage}
+                  {lockoutSeconds > 0 && (
+                    <span className="block mt-1 font-mono text-sm">
+                      Time remaining: {Math.floor(lockoutSeconds / 60)}:{(lockoutSeconds % 60).toString().padStart(2, '0')}
+                    </span>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
@@ -118,6 +173,7 @@ const Register = () => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
+                disabled={lockoutSeconds > 0}
               />
             </div>
 
@@ -130,6 +186,7 @@ const Register = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={lockoutSeconds > 0}
               />
             </div>
 
@@ -142,6 +199,20 @@ const Register = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={lockoutSeconds > 0}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={lockoutSeconds > 0}
               />
             </div>
 
@@ -188,8 +259,8 @@ const Register = () => {
               </RadioGroup>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create Account"}
+            <Button type="submit" className="w-full" disabled={loading || lockoutSeconds > 0}>
+              {loading ? "Creating account..." : lockoutSeconds > 0 ? "Temporarily Locked" : "Create Account"}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">

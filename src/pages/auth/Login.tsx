@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import BackgroundVideo from "@/components/BackgroundVideo";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Stethoscope, ArrowLeft } from "lucide-react";
+import { Stethoscope, ArrowLeft, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { getUserFriendlyError, getValidationError } from "@/lib/errorHandling";
+import { authRateLimiter } from "@/lib/rateLimiting";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -25,11 +27,50 @@ const Login = () => {
   const [step, setStep] = useState<"credentials" | "totp">("credentials");
   const [factorId, setFactorId] = useState("");
   const [challengeId, setChallengeId] = useState("");
+  const [rateLimitMessage, setRateLimitMessage] = useState("");
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    
+    const timer = setInterval(() => {
+      setLockoutSeconds(prev => {
+        if (prev <= 1) {
+          setRateLimitMessage("");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lockoutSeconds]);
+
+  // Check rate limit on email change
+  useEffect(() => {
+    if (email) {
+      const { limited, remainingSeconds, message } = authRateLimiter.checkLimit(email.toLowerCase());
+      if (limited) {
+        setRateLimitMessage(message);
+        setLockoutSeconds(remainingSeconds);
+      }
+    }
+  }, [email]);
+
   const handleSendTOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check rate limit before attempting login
+    const identifier = email.toLowerCase().trim();
+    const limitCheck = authRateLimiter.checkLimit(identifier);
+    if (limitCheck.limited) {
+      setRateLimitMessage(limitCheck.message);
+      setLockoutSeconds(limitCheck.remainingSeconds);
+      return;
+    }
     
     try {
       loginSchema.parse({ email, password });
@@ -54,8 +95,20 @@ const Login = () => {
       });
 
       if (signInError) {
+        // Record failed attempt and check for lockout
+        const result = authRateLimiter.recordFailedAttempt(identifier);
+        if (result.locked) {
+          setRateLimitMessage(result.message);
+          setLockoutSeconds(result.remainingSeconds);
+        } else if (result.message) {
+          setRateLimitMessage(result.message);
+        }
         throw signInError;
       }
+
+      // Clear rate limit on successful password verification
+      authRateLimiter.recordSuccess(identifier);
+      setRateLimitMessage("");
 
       // Check if user has MFA enrolled
       const { data: factors } = await supabase.auth.mfa.listFactors();
@@ -176,6 +229,20 @@ const Login = () => {
         <CardContent>
           {step === "credentials" ? (
             <form onSubmit={handleSendTOTP} className="space-y-4">
+              {rateLimitMessage && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    {rateLimitMessage}
+                    {lockoutSeconds > 0 && (
+                      <span className="block mt-1 font-mono text-sm">
+                        Time remaining: {Math.floor(lockoutSeconds / 60)}:{(lockoutSeconds % 60).toString().padStart(2, '0')}
+                      </span>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -185,6 +252,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={lockoutSeconds > 0}
                 />
               </div>
 
@@ -197,11 +265,12 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={lockoutSeconds > 0}
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Verifying..." : "Continue with Authenticator"}
+              <Button type="submit" className="w-full" disabled={loading || lockoutSeconds > 0}>
+                {loading ? "Verifying..." : lockoutSeconds > 0 ? "Temporarily Locked" : "Continue with Authenticator"}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
