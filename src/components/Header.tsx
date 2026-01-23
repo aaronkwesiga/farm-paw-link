@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, User, LogOut } from "lucide-react";
+import { Stethoscope, User, LogOut, MessageSquare, MapPin, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
@@ -67,6 +67,10 @@ const Header = () => {
         </Link>
 
         <nav className="flex items-center gap-4">
+          <Link to="/find-vets" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <MapPin className="h-4 w-4" />
+            <span className="hidden sm:inline">Find Vets</span>
+          </Link>
           {!session ? (
             <>
               <Link to="/auth/login">
@@ -93,6 +97,10 @@ const Header = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                   Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/messages")}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Messages
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   Profile
