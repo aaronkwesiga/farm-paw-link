@@ -155,8 +155,11 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          is_available: boolean | null
+          latitude: number | null
           license_number: string | null
           location: string | null
+          longitude: number | null
           phone_number: string | null
           profile_image_url: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -169,8 +172,11 @@ export type Database = {
           created_at?: string
           full_name: string
           id?: string
+          is_available?: boolean | null
+          latitude?: number | null
           license_number?: string | null
           location?: string | null
+          longitude?: number | null
           phone_number?: string | null
           profile_image_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -183,8 +189,11 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          is_available?: boolean | null
+          latitude?: number | null
           license_number?: string | null
           location?: string | null
+          longitude?: number | null
           phone_number?: string | null
           profile_image_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -212,6 +221,39 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vet_portfolios: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          title: string
+          updated_at: string
+          vet_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          title: string
+          updated_at?: string
+          vet_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          title?: string
+          updated_at?: string
+          vet_id?: string
         }
         Relationships: []
       }

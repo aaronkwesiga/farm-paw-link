@@ -23,6 +23,10 @@ import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import FindVets from "./pages/FindVets";
+import VetProfilePage from "./pages/vet/VetProfile";
+import VetPortfolioManage from "./pages/vet/VetPortfolioManage";
+import Messages from "./pages/Messages";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +55,10 @@ const App = () => (
             <Route path="/faq" element={<FAQ />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/find-vets" element={<FindVets />} />
+            <Route path="/vet/:userId" element={<VetProfilePage />} />
+            <Route path="/vet/portfolio/manage" element={<ProtectedRoute><VetPortfolioManage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
