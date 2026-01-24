@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VetProfile {
   id: string;
@@ -27,28 +28,38 @@ const VetMap = ({ vets, selectedVet, onSelectVet }: VetMapProps) => {
 
   useEffect(() => {
     const initMap = async () => {
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      
-      if (!apiKey) {
-        setError("Google Maps API key not configured");
-        setIsLoading(false);
-        return;
-      }
-
-      // Dynamically load Google Maps script
-      if (!window.google) {
-        const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => createMap();
-        script.onerror = () => {
-          setError("Failed to load Google Maps");
+      try {
+        // Fetch API key from edge function
+        const { data, error: fetchError } = await supabase.functions.invoke('get-maps-key');
+        
+        if (fetchError || !data?.apiKey) {
+          console.error("Failed to fetch Maps API key:", fetchError);
+          setError("Google Maps API key not configured");
           setIsLoading(false);
-        };
-        document.head.appendChild(script);
-      } else {
-        createMap();
+          return;
+        }
+
+        const apiKey = data.apiKey;
+
+        // Dynamically load Google Maps script
+        if (!window.google) {
+          const script = document.createElement("script");
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+          script.async = true;
+          script.defer = true;
+          script.onload = () => createMap();
+          script.onerror = () => {
+            setError("Failed to load Google Maps");
+            setIsLoading(false);
+          };
+          document.head.appendChild(script);
+        } else {
+          createMap();
+        }
+      } catch (err) {
+        console.error("Error initializing map:", err);
+        setError("Failed to initialize map");
+        setIsLoading(false);
       }
     };
 
