@@ -12,6 +12,7 @@ import { ClipboardList, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
 import { getUserFriendlyError } from "@/lib/errorHandling";
+import { useVetPresence } from "@/hooks/useVetPresence";
 
 type Consultation = {
   id: string;
@@ -27,9 +28,23 @@ const VetDashboard = () => {
   const [pendingConsultations, setPendingConsultations] = useState<Consultation[]>([]);
   const [myConsultations, setMyConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [vetProfile, setVetProfile] = useState<{ license_number: string | null; specialization: string | null } | null>(null);
+  const [vetProfile, setVetProfile] = useState<{ id: string; user_id: string; full_name: string; license_number: string | null; specialization: string | null; latitude: number | null; longitude: number | null } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { trackVetPresence, channel } = useVetPresence();
+
+  // Track vet presence when they're on the dashboard
+  useEffect(() => {
+    if (vetProfile && channel) {
+      trackVetPresence({
+        id: vetProfile.id,
+        user_id: vetProfile.user_id,
+        full_name: vetProfile.full_name,
+        latitude: vetProfile.latitude,
+        longitude: vetProfile.longitude,
+      });
+    }
+  }, [vetProfile, channel, trackVetPresence]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -63,10 +78,10 @@ const VetDashboard = () => {
           .select("*")
           .eq("vet_id", userId)
           .order("created_at", { ascending: false }),
-        // Fetch vet profile
+        // Fetch vet profile with location data for presence tracking
         supabase
           .from("profiles")
-          .select("license_number, specialization")
+          .select("id, user_id, full_name, license_number, specialization, latitude, longitude")
           .eq("user_id", userId)
           .maybeSingle(),
       ]);
