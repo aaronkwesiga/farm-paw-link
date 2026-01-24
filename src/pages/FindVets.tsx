@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { MapPin, Phone, User, Search, Star, CheckCircle } from "lucide-react";
+import { MapPin, Phone, User, Search, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useVetPresence } from "@/hooks/useVetPresence";
 import VetMap from "@/components/vet/VetMap";
+import OnlineIndicator from "@/components/vet/OnlineIndicator";
 
 interface VetProfile {
   id: string;
@@ -35,6 +38,8 @@ const FindVets = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVet, setSelectedVet] = useState<VetProfile | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
+  const { isVetOnline, getOnlineVetData } = useVetPresence();
 
   const handleSelectVet = (vet: VetProfile) => {
     setSelectedVet(vet);
@@ -52,14 +57,14 @@ const FindVets = () => {
       setFilteredVets(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: "Failed to load veterinarians",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     fetchVets();
@@ -81,9 +86,27 @@ const FindVets = () => {
     }
   }, [searchQuery, vets]);
 
-  const vetsWithLocation = filteredVets.filter(
+  // Sort vets: online first, then by name
+  const sortedVets = [...filteredVets].sort((a, b) => {
+    const aOnline = isVetOnline(a.user_id);
+    const bOnline = isVetOnline(b.user_id);
+    if (aOnline && !bOnline) return -1;
+    if (!aOnline && bOnline) return 1;
+    return a.full_name.localeCompare(b.full_name);
+  });
+
+  const vetsWithLocation = sortedVets.filter(
     (vet) => vet.latitude !== null && vet.longitude !== null
   );
+
+  // Get real-time location for online vets
+  const getVetLocation = (vet: VetProfile) => {
+    const onlineData = getOnlineVetData(vet.user_id);
+    if (onlineData?.latitude && onlineData?.longitude) {
+      return { lat: onlineData.latitude, lng: onlineData.longitude };
+    }
+    return vet.latitude && vet.longitude ? { lat: vet.latitude, lng: vet.longitude } : null;
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -92,9 +115,9 @@ const FindVets = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Find Veterinarians</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t("findVets.title")}</h1>
           <p className="text-muted-foreground">
-            Discover qualified veterinarians in your area
+            {t("findVets.subtitle")}
           </p>
         </div>
 
@@ -102,7 +125,7 @@ const FindVets = () => {
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, location, or specialization..."
+            placeholder={t("findVets.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -115,7 +138,7 @@ const FindVets = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                Vet Locations
+                {t("findVets.vetLocations")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -126,7 +149,7 @@ const FindVets = () => {
               />
               {vetsWithLocation.length === 0 && !loading && (
                 <p className="text-center text-muted-foreground mt-4">
-                  No veterinarians with location data available
+                  {t("findVets.noLocationData")}
                 </p>
               )}
             </CardContent>
@@ -135,7 +158,7 @@ const FindVets = () => {
           {/* Vet List */}
           <div className="order-1 lg:order-2 space-y-4">
             <h2 className="text-xl font-semibold">
-              {filteredVets.length} Veterinarian{filteredVets.length !== 1 ? "s" : ""} Found
+              {sortedVets.length} {sortedVets.length !== 1 ? t("findVets.veterinarians") : t("findVets.veterinarian")} {t("findVets.found")}
             </h2>
 
             {loading ? (
@@ -155,87 +178,102 @@ const FindVets = () => {
                   </Card>
                 ))}
               </div>
-            ) : filteredVets.length === 0 ? (
+            ) : sortedVets.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No veterinarians found</p>
+                  <p className="text-muted-foreground">{t("findVets.noVets")}</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                {filteredVets.map((vet) => (
-                  <Card
-                    key={vet.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedVet?.id === vet.id ? "ring-2 ring-primary" : ""
-                    }`}
-                    onClick={() => setSelectedVet(vet)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex gap-4">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage src={vet.profile_image_url || undefined} />
-                          <AvatarFallback>
-                            <User className="h-8 w-8" />
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold text-lg truncate">
-                              {vet.full_name}
-                            </h3>
-                            {vet.license_number && (
-                              <Badge variant="secondary" className="flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3" />
-                                Verified
-                              </Badge>
-                            )}
-                            {vet.is_available && (
-                              <Badge className="bg-success text-success-foreground">
-                                Available
-                              </Badge>
-                            )}
+                {sortedVets.map((vet) => {
+                  const vetIsOnline = isVetOnline(vet.user_id);
+                  
+                  return (
+                    <Card
+                      key={vet.id}
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        selectedVet?.id === vet.id ? "ring-2 ring-primary" : ""
+                      } ${vetIsOnline ? "border-success/50" : ""}`}
+                      onClick={() => setSelectedVet(vet)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex gap-4">
+                          <div className="relative">
+                            <Avatar className="h-16 w-16">
+                              <AvatarImage src={vet.profile_image_url || undefined} />
+                              <AvatarFallback>
+                                <User className="h-8 w-8" />
+                              </AvatarFallback>
+                            </Avatar>
+                            {/* Online indicator on avatar */}
+                            <div className="absolute -bottom-1 -right-1">
+                              <OnlineIndicator isOnline={vetIsOnline} size="md" />
+                            </div>
                           </div>
 
-                          {vet.specialization && (
-                            <p className="text-sm text-muted-foreground">
-                              {vet.specialization}
-                            </p>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold text-lg truncate">
+                                {vet.full_name}
+                              </h3>
+                              {vet.license_number && (
+                                <Badge variant="secondary" className="flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  {t("findVets.verified")}
+                                </Badge>
+                              )}
+                              {vetIsOnline && (
+                                <Badge className="bg-success text-success-foreground">
+                                  {t("findVets.online")}
+                                </Badge>
+                              )}
+                              {!vetIsOnline && vet.is_available && (
+                                <Badge variant="outline">
+                                  {t("findVets.available")}
+                                </Badge>
+                              )}
+                            </div>
 
-                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            {vet.location && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {vet.location}
-                              </span>
+                            {vet.specialization && (
+                              <p className="text-sm text-muted-foreground">
+                                {vet.specialization}
+                              </p>
                             )}
-                            {vet.phone_number && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {vet.phone_number}
-                              </span>
+
+                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                              {vet.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {vet.location}
+                                </span>
+                              )}
+                              {vet.phone_number && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  {vet.phone_number}
+                                </span>
+                              )}
+                            </div>
+
+                            {vet.bio && (
+                              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                {vet.bio}
+                              </p>
                             )}
-                          </div>
 
-                          {vet.bio && (
-                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                              {vet.bio}
-                            </p>
-                          )}
-
-                          <div className="mt-3">
-                            <Link to={`/vet/${vet.user_id}`}>
-                              <Button size="sm">View Profile</Button>
-                            </Link>
+                            <div className="mt-3">
+                              <Link to={`/vet/${vet.user_id}`}>
+                                <Button size="sm">{t("findVets.viewProfile")}</Button>
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, User, LogOut, MessageSquare, MapPin, Briefcase } from "lucide-react";
+import { Stethoscope, User, LogOut, MessageSquare, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
@@ -13,11 +13,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ThemeToggle from "@/components/ThemeToggle";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -66,18 +70,22 @@ const Header = () => {
           <span>VetConnect</span>
         </Link>
 
-        <nav className="flex items-center gap-4">
-          <Link to="/find-vets" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+        <nav className="flex items-center gap-2">
+          <Link to="/find-vets" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 px-2">
             <MapPin className="h-4 w-4" />
-            <span className="hidden sm:inline">Find Vets</span>
+            <span className="hidden sm:inline">{t("nav.findVets")}</span>
           </Link>
+          
+          <LanguageSelector />
+          <ThemeToggle />
+          
           {!session ? (
             <>
               <Link to="/auth/login">
-                <Button variant="ghost">Login</Button>
+                <Button variant="ghost">{t("nav.login")}</Button>
               </Link>
               <Link to="/auth/register">
-                <Button>Get Started</Button>
+                <Button>{t("nav.getStarted")}</Button>
               </Link>
             </>
           ) : (
@@ -93,22 +101,22 @@ const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("nav.myAccount")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  Dashboard
+                  {t("nav.dashboard")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/messages")}>
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  Messages
+                  {t("nav.messages")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  Profile
+                  {t("nav.profile")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                  {t("nav.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
