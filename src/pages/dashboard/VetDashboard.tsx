@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
 import { getUserFriendlyError } from "@/lib/errorHandling";
 import { useVetPresence } from "@/hooks/useVetPresence";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Consultation = {
   id: string;
@@ -32,6 +33,7 @@ const VetDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { trackVetPresence, channel } = useVetPresence();
+  const { t } = useLanguage();
 
   // Track vet presence when they're on the dashboard
   useEffect(() => {
@@ -93,9 +95,9 @@ const VetDashboard = () => {
       const pendingWithLimitedInfo = (pendingRes.data || []).map(consultation => ({
         ...consultation,
         subject: consultation.urgency_level === 'emergency' 
-          ? 'Emergency case - immediate attention needed'
-          : 'Consultation request pending',
-        description: 'Details will be available after accepting the consultation',
+          ? t("urgency.emergency") + ' - ' + t("vetDashboard.acceptCase")
+          : t("status.pending") + ' - ' + t("vetDashboard.acceptCase"),
+        description: t("vetDashboard.availableConsultationsDesc"),
         farmer_id: '',
       }));
 
@@ -104,7 +106,7 @@ const VetDashboard = () => {
       setVetProfile(profileRes.data);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "dashboard_load"),
         variant: "destructive",
       });
@@ -136,7 +138,7 @@ const VetDashboard = () => {
       // If no data returned, another vet already accepted this consultation
       if (!data) {
         toast({
-          title: "Consultation Unavailable",
+          title: t("common.error"),
           description: "This consultation was already accepted by another veterinarian",
           variant: "destructive",
         });
@@ -148,7 +150,7 @@ const VetDashboard = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: t("common.success"),
         description: "Consultation accepted successfully",
       });
 
@@ -156,7 +158,7 @@ const VetDashboard = () => {
       fetchDashboardData(session.user.id);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: error.message || "Failed to accept consultation",
         variant: "destructive",
       });
@@ -171,9 +173,16 @@ const VetDashboard = () => {
       cancelled: "bg-muted text-muted-foreground",
     };
 
+    const statusLabels: Record<string, string> = {
+      pending: t("status.pending"),
+      in_progress: t("status.inProgress"),
+      completed: t("status.completed"),
+      cancelled: t("status.cancelled"),
+    };
+
     return (
       <Badge className={statusColors[status] || "bg-muted"}>
-        {status.replace("_", " ")}
+        {statusLabels[status] || status.replace("_", " ")}
       </Badge>
     );
   };
@@ -186,7 +195,14 @@ const VetDashboard = () => {
       emergency: "bg-destructive text-destructive-foreground",
     };
 
-    return <Badge className={urgencyColors[urgency] || "bg-muted"}>{urgency}</Badge>;
+    const urgencyLabels: Record<string, string> = {
+      low: t("urgency.low"),
+      medium: t("urgency.medium"),
+      high: t("urgency.high"),
+      emergency: t("urgency.emergency"),
+    };
+
+    return <Badge className={urgencyColors[urgency] || "bg-muted"}>{urgencyLabels[urgency] || urgency}</Badge>;
   };
 
   if (loading) {
@@ -210,8 +226,8 @@ const VetDashboard = () => {
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Veterinarian Dashboard</h1>
-              <p className="text-muted-foreground">Manage consultations and help farmers</p>
+              <h1 className="text-3xl font-bold mb-2">{t("vetDashboard.title")}</h1>
+              <p className="text-muted-foreground">{t("vetDashboard.subtitle")}</p>
             </div>
             {vetProfile && (
               <VetVerificationBadge
@@ -229,7 +245,7 @@ const VetDashboard = () => {
               <CardTitle className="text-4xl font-bold text-warning">
                 {pendingConsultations.length}
               </CardTitle>
-              <CardDescription>Pending Consultations</CardDescription>
+              <CardDescription>{t("vetDashboard.pendingConsultations")}</CardDescription>
             </CardHeader>
           </Card>
 
@@ -238,7 +254,7 @@ const VetDashboard = () => {
               <CardTitle className="text-4xl font-bold text-info">
                 {myConsultations.filter((c) => c.status === "in_progress").length}
               </CardTitle>
-              <CardDescription>In Progress</CardDescription>
+              <CardDescription>{t("vetDashboard.inProgress")}</CardDescription>
             </CardHeader>
           </Card>
 
@@ -247,7 +263,7 @@ const VetDashboard = () => {
               <CardTitle className="text-4xl font-bold text-success">
                 {myConsultations.filter((c) => c.status === "completed").length}
               </CardTitle>
-              <CardDescription>Completed</CardDescription>
+              <CardDescription>{t("vetDashboard.completed")}</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -257,25 +273,25 @@ const VetDashboard = () => {
           <TabsList>
             <TabsTrigger value="pending" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              Pending
+              {t("vetDashboard.pending")}
             </TabsTrigger>
             <TabsTrigger value="my-cases" className="flex items-center gap-2">
               <ClipboardList className="h-4 w-4" />
-              My Cases
+              {t("vetDashboard.myCases")}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending">
             <Card>
               <CardHeader>
-                <CardTitle>Available Consultations</CardTitle>
-                <CardDescription>Accept consultations to start helping farmers</CardDescription>
+                <CardTitle>{t("vetDashboard.availableConsultations")}</CardTitle>
+                <CardDescription>{t("vetDashboard.availableConsultationsDesc")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {pendingConsultations.length === 0 ? (
                   <div className="text-center py-8">
                     <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No pending consultations at the moment</p>
+                    <p className="text-muted-foreground">{t("vetDashboard.noPending")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -292,14 +308,14 @@ const VetDashboard = () => {
                           {consultation.description?.substring(0, 150)}...
                         </p>
                         <p className="text-xs text-muted-foreground mb-3">
-                          Requested: {new Date(consultation.created_at).toLocaleDateString()}
+                          {t("vetDashboard.requested")}: {new Date(consultation.created_at).toLocaleDateString()}
                         </p>
                         <div className="flex gap-2">
                           <Button
                             onClick={() => handleAcceptConsultation(consultation.id)}
                             size="sm"
                           >
-                            Accept Case to View Details
+                            {t("vetDashboard.acceptCase")}
                           </Button>
                         </div>
                       </div>
@@ -313,14 +329,14 @@ const VetDashboard = () => {
           <TabsContent value="my-cases">
             <Card>
               <CardHeader>
-                <CardTitle>My Consultations</CardTitle>
-                <CardDescription>Consultations you're currently managing</CardDescription>
+                <CardTitle>{t("vetDashboard.myConsultations")}</CardTitle>
+                <CardDescription>{t("vetDashboard.myConsultationsDesc")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {myConsultations.length === 0 ? (
                   <div className="text-center py-8">
                     <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">You haven't accepted any consultations yet</p>
+                    <p className="text-muted-foreground">{t("vetDashboard.noAccepted")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -337,11 +353,11 @@ const VetDashboard = () => {
                           </div>
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Started: {new Date(consultation.created_at).toLocaleDateString()}
+                          {t("vetDashboard.started")}: {new Date(consultation.created_at).toLocaleDateString()}
                         </p>
                         <Link to={`/consultation/${consultation.id}`}>
                           <Button variant="outline" size="sm">
-                            Manage Case
+                            {t("vetDashboard.manageCase")}
                           </Button>
                         </Link>
                       </div>

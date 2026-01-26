@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ClipboardList, PawPrint, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getUserFriendlyError } from "@/lib/errorHandling";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Consultation = {
   id: string;
@@ -33,6 +34,7 @@ const FarmerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -70,7 +72,7 @@ const FarmerDashboard = () => {
       setAnimals(animalsRes.data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "dashboard_load"),
         variant: "destructive",
       });
@@ -87,9 +89,16 @@ const FarmerDashboard = () => {
       cancelled: "bg-muted text-muted-foreground",
     };
 
+    const statusLabels: Record<string, string> = {
+      pending: t("status.pending"),
+      in_progress: t("status.inProgress"),
+      completed: t("status.completed"),
+      cancelled: t("status.cancelled"),
+    };
+
     return (
       <Badge className={statusColors[status] || "bg-muted"}>
-        {status.replace("_", " ")}
+        {statusLabels[status] || status.replace("_", " ")}
       </Badge>
     );
   };
@@ -102,7 +111,14 @@ const FarmerDashboard = () => {
       emergency: "bg-destructive text-destructive-foreground",
     };
 
-    return <Badge className={urgencyColors[urgency] || "bg-muted"}>{urgency}</Badge>;
+    const urgencyLabels: Record<string, string> = {
+      low: t("urgency.low"),
+      medium: t("urgency.medium"),
+      high: t("urgency.high"),
+      emergency: t("urgency.emergency"),
+    };
+
+    return <Badge className={urgencyColors[urgency] || "bg-muted"}>{urgencyLabels[urgency] || urgency}</Badge>;
   };
 
   if (loading) {
@@ -124,8 +140,8 @@ const FarmerDashboard = () => {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Farmer Dashboard</h1>
-          <p className="text-muted-foreground">Manage your animals and consultations</p>
+          <h1 className="text-3xl font-bold mb-2">{t("farmerDashboard.title")}</h1>
+          <p className="text-muted-foreground">{t("farmerDashboard.subtitle")}</p>
         </div>
 
         {/* Quick Actions */}
@@ -135,9 +151,9 @@ const FarmerDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5 text-primary" />
-                  Request Consultation
+                  {t("farmerDashboard.requestConsultation")}
                 </CardTitle>
-                <CardDescription>Get expert veterinary advice for your animals</CardDescription>
+                <CardDescription>{t("farmerDashboard.requestConsultationDesc")}</CardDescription>
               </CardHeader>
             </Card>
           </Link>
@@ -147,9 +163,9 @@ const FarmerDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PawPrint className="h-5 w-5 text-secondary" />
-                  Manage Animals
+                  {t("farmerDashboard.manageAnimals")}
                 </CardTitle>
-                <CardDescription>Add or update your animal records</CardDescription>
+                <CardDescription>{t("farmerDashboard.manageAnimalsDesc")}</CardDescription>
               </CardHeader>
             </Card>
           </Link>
@@ -160,7 +176,7 @@ const FarmerDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-4xl font-bold text-primary">{animals.length}</CardTitle>
-              <CardDescription>Total Animals</CardDescription>
+              <CardDescription>{t("farmerDashboard.totalAnimals")}</CardDescription>
             </CardHeader>
           </Card>
 
@@ -169,7 +185,7 @@ const FarmerDashboard = () => {
               <CardTitle className="text-4xl font-bold text-secondary">
                 {consultations.filter((c) => c.status === "pending").length}
               </CardTitle>
-              <CardDescription>Pending Consultations</CardDescription>
+              <CardDescription>{t("farmerDashboard.pendingConsultations")}</CardDescription>
             </CardHeader>
           </Card>
 
@@ -178,7 +194,7 @@ const FarmerDashboard = () => {
               <CardTitle className="text-4xl font-bold text-success">
                 {consultations.filter((c) => c.status === "completed").length}
               </CardTitle>
-              <CardDescription>Completed Consultations</CardDescription>
+              <CardDescription>{t("farmerDashboard.completedConsultations")}</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -188,17 +204,17 @@ const FarmerDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5" />
-              Recent Consultations
+              {t("farmerDashboard.recentConsultations")}
             </CardTitle>
-            <CardDescription>Your latest consultation requests</CardDescription>
+            <CardDescription>{t("farmerDashboard.recentConsultationsDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             {consultations.length === 0 ? (
               <div className="text-center py-8">
                 <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">No consultations yet</p>
+                <p className="text-muted-foreground mb-4">{t("farmerDashboard.noConsultations")}</p>
                 <Link to="/consultation/new">
-                  <Button>Request Your First Consultation</Button>
+                  <Button>{t("farmerDashboard.firstConsultation")}</Button>
                 </Link>
               </div>
             ) : (
@@ -216,11 +232,11 @@ const FarmerDashboard = () => {
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
-                      Created: {new Date(consultation.created_at).toLocaleDateString()}
+                      {t("farmerDashboard.created")}: {new Date(consultation.created_at).toLocaleDateString()}
                     </p>
                     <Link to={`/consultation/${consultation.id}`}>
                       <Button variant="outline" size="sm">
-                        View Details
+                        {t("farmerDashboard.viewDetails")}
                       </Button>
                     </Link>
                   </div>
