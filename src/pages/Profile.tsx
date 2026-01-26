@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, User, Shield, CheckCircle, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserFriendlyError } from "@/lib/errorHandling";
@@ -25,6 +26,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { uploadFiles, uploading } = useFileUpload();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -57,7 +59,7 @@ const Profile = () => {
         setMfaEnabled(factors?.totp.length > 0);
       } catch (error: any) {
         toast({
-          title: "Error",
+          title: t("common.error"),
           description: getUserFriendlyError(error, "profile_load"),
           variant: "destructive",
         });
@@ -67,7 +69,7 @@ const Profile = () => {
     };
 
     loadProfile();
-  }, [navigate]);
+  }, [navigate, t]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,12 +102,12 @@ const Profile = () => {
 
       setProfileImageUrl(uploadedUrls[0]);
       toast({
-        title: "Profile photo updated",
-        description: "Your profile photo has been updated successfully.",
+        title: t("profile.photoUpdated"),
+        description: t("profile.photoUpdatedSuccess"),
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "profile_photo_upload"),
         variant: "destructive",
       });
@@ -138,12 +140,12 @@ const Profile = () => {
       if (error) throw error;
 
       toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+        title: t("profile.updated"),
+        description: t("profile.updatedSuccess"),
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "profile_update"),
         variant: "destructive",
       });
@@ -174,10 +176,10 @@ const Profile = () => {
           <CardHeader>
             <div className="flex items-center gap-2">
               <User className="h-6 w-6" />
-              <CardTitle>Profile Settings</CardTitle>
+              <CardTitle>{t("profile.title")}</CardTitle>
             </div>
             <CardDescription>
-              Manage your account information and preferences
+              {t("profile.subtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -206,12 +208,12 @@ const Profile = () => {
                   </label>
                 </div>
                 {uploading && (
-                  <p className="text-sm text-muted-foreground">Uploading...</p>
+                  <p className="text-sm text-muted-foreground">{t("consultation.uploading")}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("profile.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -220,29 +222,29 @@ const Profile = () => {
                   className="bg-muted"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Email cannot be changed
+                  {t("profile.emailCannotChange")}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">{t("profile.fullName")}</Label>
                 <Input
                   id="fullName"
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
+                  placeholder={t("profile.fullNamePlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">{t("profile.phoneNumber")}</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Enter your phone number"
+                  placeholder={t("profile.phonePlaceholder")}
                 />
               </div>
 
@@ -250,10 +252,10 @@ const Profile = () => {
                 {updating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
+                    {t("profile.updating")}
                   </>
                 ) : (
-                  "Update Profile"
+                  t("profile.updateProfile")
                 )}
               </Button>
             </form>
@@ -264,30 +266,30 @@ const Profile = () => {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6" />
-              <CardTitle>Security Settings</CardTitle>
+              <CardTitle>{t("profile.security")}</CardTitle>
             </div>
             <CardDescription>
-              Manage two-factor authentication for your account
+              {t("profile.securityDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium">Google Authenticator</p>
+                  <p className="font-medium">{t("profile.googleAuth")}</p>
                   {mfaEnabled && (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {mfaEnabled 
-                    ? "Two-factor authentication is enabled" 
-                    : "Add extra security by requiring a code from your phone"}
+                    ? t("profile.mfaEnabled")
+                    : t("profile.mfaDisabled")}
                 </p>
               </div>
               {!mfaEnabled && (
                 <Button asChild>
-                  <Link to="/auth/mfa-setup">Enable</Link>
+                  <Link to="/auth/mfa-setup">{t("profile.enable")}</Link>
                 </Button>
               )}
             </div>
