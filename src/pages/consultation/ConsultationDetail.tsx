@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MessagingPanel } from "@/components/consultation/MessagingPanel";
 import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Consultation = {
   id: string;
@@ -37,6 +38,7 @@ type VetProfile = {
 
 const ConsultationDetail = () => {
   const { id } = useParams();
+  const { t } = useLanguage();
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [vetProfile, setVetProfile] = useState<VetProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,8 +67,8 @@ const ConsultationDetail = () => {
 
     if (consultError) {
       toast({
-        title: "Error",
-        description: "Failed to load consultation",
+        title: t("common.error"),
+        description: t("consultationDetail.failedToLoad"),
         variant: "destructive",
       });
       navigate("/dashboard");
@@ -113,7 +115,8 @@ const ConsultationDetail = () => {
       completed: "bg-success text-success-foreground",
       cancelled: "bg-muted text-muted-foreground",
     };
-    return <Badge className={colors[status] || "bg-muted"}>{status.replace("_", " ")}</Badge>;
+    const statusKey = `status.${status === "in_progress" ? "inProgress" : status}`;
+    return <Badge className={colors[status] || "bg-muted"}>{t(statusKey)}</Badge>;
   };
 
   const getUrgencyBadge = (urgency: string) => {
@@ -123,7 +126,7 @@ const ConsultationDetail = () => {
       high: "bg-warning text-warning-foreground",
       emergency: "bg-destructive text-destructive-foreground",
     };
-    return <Badge className={colors[urgency] || "bg-muted"}>{urgency}</Badge>;
+    return <Badge className={colors[urgency] || "bg-muted"}>{t(`urgency.${urgency}`)}</Badge>;
   };
 
   return (
@@ -138,11 +141,11 @@ const ConsultationDetail = () => {
                 <div className="space-y-2">
                   <CardTitle>{consultation.subject}</CardTitle>
                   <CardDescription>
-                    Requested on {new Date(consultation.created_at).toLocaleDateString()}
+                    {t("consultationDetail.requestedOn")} {new Date(consultation.created_at).toLocaleDateString()}
                   </CardDescription>
                   {vetProfile && (
                     <div className="pt-2">
-                      <p className="text-sm font-medium mb-1">Assigned Veterinarian: {vetProfile.full_name}</p>
+                      <p className="text-sm font-medium mb-1">{t("consultationDetail.assignedVet")}: {vetProfile.full_name}</p>
                       <VetVerificationBadge
                         licenseNumber={vetProfile.license_number}
                         specialization={vetProfile.specialization}
@@ -158,28 +161,46 @@ const ConsultationDetail = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="font-semibold mb-2">Description</h3>
+                <h3 className="font-semibold mb-2">{t("consultationDetail.description")}</h3>
                 <p className="text-muted-foreground">{consultation.description}</p>
               </div>
               {consultation.symptoms && (
                 <div>
-                  <h3 className="font-semibold mb-2">Symptoms</h3>
+                  <h3 className="font-semibold mb-2">{t("consultationDetail.symptoms")}</h3>
                   <p className="text-muted-foreground">{consultation.symptoms}</p>
                 </div>
               )}
               {consultation.image_urls && consultation.image_urls.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Images</h3>
+                  <h3 className="font-semibold mb-2">{t("consultationDetail.images")}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {consultation.image_urls.map((url, idx) => (
                       <img
                         key={idx}
                         src={url}
-                        alt={`Consultation ${idx + 1}`}
+                        alt={`${t("consultation.title")} ${idx + 1}`}
                         className="rounded-lg w-full h-48 object-cover"
                       />
                     ))}
                   </div>
+                </div>
+              )}
+              {consultation.diagnosis && (
+                <div>
+                  <h3 className="font-semibold mb-2">{t("consultationDetail.diagnosis")}</h3>
+                  <p className="text-muted-foreground">{consultation.diagnosis}</p>
+                </div>
+              )}
+              {consultation.treatment_plan && (
+                <div>
+                  <h3 className="font-semibold mb-2">{t("consultationDetail.treatmentPlan")}</h3>
+                  <p className="text-muted-foreground">{consultation.treatment_plan}</p>
+                </div>
+              )}
+              {consultation.follow_up_notes && (
+                <div>
+                  <h3 className="font-semibold mb-2">{t("consultationDetail.followUpNotes")}</h3>
+                  <p className="text-muted-foreground">{consultation.follow_up_notes}</p>
                 </div>
               )}
             </CardContent>
@@ -188,7 +209,7 @@ const ConsultationDetail = () => {
           <MessagingPanel consultationId={id!} />
 
           <Button variant="outline" onClick={() => navigate(-1)}>
-            Back
+            {t("consultationDetail.back")}
           </Button>
         </div>
       </main>

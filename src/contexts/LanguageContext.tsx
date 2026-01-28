@@ -213,6 +213,29 @@ const translations: Record<Language, Record<string, string>> = {
     "common.unnamed": "Unnamed",
     "common.years": "years",
     "common.months": "months",
+    "common.you": "You",
+    
+    // Messaging
+    "messaging.title": "Messages",
+    "messaging.subtitle": "Your consultation conversations",
+    "messaging.noMessages": "No Messages Yet",
+    "messaging.noMessagesDesc": "Start a consultation to begin messaging with a veterinarian.",
+    "messaging.pendingAssignment": "Pending Assignment",
+    "messaging.consultationMessages": "Consultation Messages",
+    "messaging.typeMessage": "Type your message...",
+    "messaging.sendMessage": "Send message",
+    
+    // Consultation Detail
+    "consultationDetail.requestedOn": "Requested on",
+    "consultationDetail.assignedVet": "Assigned Veterinarian",
+    "consultationDetail.description": "Description",
+    "consultationDetail.symptoms": "Symptoms",
+    "consultationDetail.images": "Images",
+    "consultationDetail.back": "Back",
+    "consultationDetail.failedToLoad": "Failed to load consultation",
+    "consultationDetail.diagnosis": "Diagnosis",
+    "consultationDetail.treatmentPlan": "Treatment Plan",
+    "consultationDetail.followUpNotes": "Follow-up Notes",
     
     // Theme
     "theme.light": "Light",
@@ -430,6 +453,29 @@ const translations: Record<Language, Record<string, string>> = {
     "common.unnamed": "Etaine izina",
     "common.years": "emyaka",
     "common.months": "emyezi",
+    "common.you": "Iwe",
+    
+    // Messaging
+    "messaging.title": "Obubaka",
+    "messaging.subtitle": "Ebiteekateko by'okubuuza kwawe",
+    "messaging.noMessages": "Tihariho Bubaka",
+    "messaging.noMessagesDesc": "Tandika okubuuza otandike okutumirana n'omushaaho.",
+    "messaging.pendingAssignment": "Nikwetekyerezebwa",
+    "messaging.consultationMessages": "Obubaka bw'Okubuuza",
+    "messaging.typeMessage": "Andika obubaka bwawe...",
+    "messaging.sendMessage": "Sindika obubaka",
+    
+    // Consultation Detail
+    "consultationDetail.requestedOn": "Kwasabwa",
+    "consultationDetail.assignedVet": "Omushaaho Owakwatirizibwa",
+    "consultationDetail.description": "Ebirikukwataho",
+    "consultationDetail.symptoms": "Obumanyiso",
+    "consultationDetail.images": "Ebifaananyi",
+    "consultationDetail.back": "Garuka",
+    "consultationDetail.failedToLoad": "Kureeba okubuuza kuremere",
+    "consultationDetail.diagnosis": "Okusanga Obulwaire",
+    "consultationDetail.treatmentPlan": "Entekateeka y'Obujanjabi",
+    "consultationDetail.followUpNotes": "Amakuru g'Okulondoora",
     
     // Theme
     "theme.light": "Ekitangaaza",
@@ -647,6 +693,29 @@ const translations: Record<Language, Record<string, string>> = {
     "common.unnamed": "Etaine izina",
     "common.years": "emyaka",
     "common.months": "emyezi",
+    "common.you": "Iwe",
+    
+    // Messaging
+    "messaging.title": "Obubaka",
+    "messaging.subtitle": "Ebiteekateko by'okubuuza kwawe",
+    "messaging.noMessages": "Tihariho Bubaka",
+    "messaging.noMessagesDesc": "Tandika okubuuza otandike okutumirana n'omusawo.",
+    "messaging.pendingAssignment": "Nikwetekyerezebwa",
+    "messaging.consultationMessages": "Obubaka bw'Okubuuza",
+    "messaging.typeMessage": "Andika obubaka bwawe...",
+    "messaging.sendMessage": "Sindika obubaka",
+    
+    // Consultation Detail
+    "consultationDetail.requestedOn": "Kyasabwa",
+    "consultationDetail.assignedVet": "Omusawo Owakwatirizibwa",
+    "consultationDetail.description": "Ebirikukwataho",
+    "consultationDetail.symptoms": "Obumanyiso",
+    "consultationDetail.images": "Ebifaananyi",
+    "consultationDetail.back": "Garuka",
+    "consultationDetail.failedToLoad": "Kureba okubuuza kuremere",
+    "consultationDetail.diagnosis": "Okusanga Obulwaire",
+    "consultationDetail.treatmentPlan": "Entekateeka y'Obujanjabi",
+    "consultationDetail.followUpNotes": "Amakuru g'Okulondoora",
     
     // Theme
     "theme.light": "Ekitangaaza",
@@ -864,6 +933,29 @@ const translations: Record<Language, Record<string, string>> = {
     "common.unnamed": "Etaine izina",
     "common.years": "emyaka",
     "common.months": "emyezi",
+    "common.you": "Iwe",
+    
+    // Messaging
+    "messaging.title": "Obubaka",
+    "messaging.subtitle": "Ebiteekateko by'okubuuza kwawe",
+    "messaging.noMessages": "Tihariho Bubaka",
+    "messaging.noMessagesDesc": "Tandika okubuuza otandike okutumirana n'omusawo.",
+    "messaging.pendingAssignment": "Nikwetekyerezebwa",
+    "messaging.consultationMessages": "Obubaka bw'Okubuuza",
+    "messaging.typeMessage": "Andika obubaka bwawe...",
+    "messaging.sendMessage": "Sindika obubaka",
+    
+    // Consultation Detail
+    "consultationDetail.requestedOn": "Kyasabwa",
+    "consultationDetail.assignedVet": "Omusawo Owakwatirizibwa",
+    "consultationDetail.description": "Ebirikukwataho",
+    "consultationDetail.symptoms": "Obumanyiso",
+    "consultationDetail.images": "Ebifaananyi",
+    "consultationDetail.back": "Garuka",
+    "consultationDetail.failedToLoad": "Kureba okubuuza kuremere",
+    "consultationDetail.diagnosis": "Okusanga Obulwaire",
+    "consultationDetail.treatmentPlan": "Entekateeka y'Obujanjabi",
+    "consultationDetail.followUpNotes": "Amakuru g'Okulondoora",
     
     // Theme
     "theme.light": "Ekitangaala",

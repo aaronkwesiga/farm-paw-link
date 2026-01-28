@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { Send, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import { getUserFriendlyError } from '@/lib/errorHandling';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ interface MessagingPanelProps {
 
 export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -96,7 +98,7 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
       setMessages(enrichedMessages);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "messages_load"),
         variant: "destructive",
       });
@@ -121,7 +123,7 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
       setNewMessage('');
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "message_send"),
         variant: "destructive",
       });
@@ -140,7 +142,7 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
   return (
     <Card className="flex flex-col h-[500px]">
       <div className="p-4 border-b">
-        <h3 className="font-semibold">Consultation Messages</h3>
+        <h3 className="font-semibold">{t("messaging.consultationMessages")}</h3>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -180,7 +182,7 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
+            placeholder={t("messaging.typeMessage")}
             className="resize-none"
             rows={2}
           />
@@ -189,6 +191,7 @@ export const MessagingPanel = ({ consultationId }: MessagingPanelProps) => {
             disabled={!newMessage.trim() || sending}
             size="icon"
             className="shrink-0"
+            aria-label={t("messaging.sendMessage")}
           >
             <Send className="h-4 w-4" />
           </Button>
