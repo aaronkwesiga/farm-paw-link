@@ -13,13 +13,10 @@ import { Stethoscope, ArrowLeft, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { getUserFriendlyError, getValidationError } from "@/lib/errorHandling";
 import { authRateLimiter } from "@/lib/rateLimiting";
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Login = () => {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -31,6 +28,11 @@ const Login = () => {
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const loginSchema = z.object({
+    email: z.string().email(t("auth.invalidEmail")),
+    password: z.string().min(6, t("auth.passwordMinLength")),
+  });
 
   // Countdown timer for lockout
   useEffect(() => {
@@ -77,7 +79,7 @@ const Login = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Validation Error",
+          title: t("auth.validationError"),
           description: getValidationError(error),
           variant: "destructive",
         });
@@ -116,8 +118,8 @@ const Login = () => {
       if (!factors || factors.totp.length === 0) {
         // MFA not enabled - allow login without it
         toast({
-          title: "Login Successful",
-          description: "Consider enabling Google Authenticator for extra security",
+          title: t("auth.loginSuccess"),
+          description: t("auth.mfaReminder"),
         });
         navigate("/dashboard");
         return;
@@ -137,14 +139,14 @@ const Login = () => {
       setFactorId(factor.id);
       setChallengeId(challengeData.id);
       toast({
-        title: "Enter Authenticator Code",
-        description: "Open Google Authenticator and enter the 6-digit code",
+        title: t("auth.enterAuthCode"),
+        description: t("auth.openAuthApp"),
       });
       
       setStep("totp");
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "login"),
         variant: "destructive",
       });
@@ -159,8 +161,8 @@ const Login = () => {
 
     if (otp.length !== 6) {
       toast({
-        title: "Invalid Code",
-        description: "Please enter a 6-digit code",
+        title: t("auth.invalidCode"),
+        description: t("auth.enterSixDigits"),
         variant: "destructive",
       });
       return;
@@ -189,13 +191,13 @@ const Login = () => {
       }
 
       toast({
-        title: "Success",
-        description: "Logged in successfully with Google Authenticator",
+        title: t("common.success"),
+        description: t("auth.mfaSuccess"),
       });
       navigate("/dashboard");
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "mfa_verification"),
         variant: "destructive",
       });
@@ -218,12 +220,12 @@ const Login = () => {
             <Stethoscope className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">
-            {step === "credentials" ? "Welcome Back" : "Authenticator Code"}
+            {step === "credentials" ? t("auth.welcomeBack") : t("auth.authenticatorCode")}
           </CardTitle>
           <CardDescription>
             {step === "credentials" 
-              ? "Login to access your VetConnect account" 
-              : "Enter the 6-digit code from Google Authenticator"}
+              ? t("auth.loginSubtitle")
+              : t("auth.enterCode")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -236,7 +238,7 @@ const Login = () => {
                     {rateLimitMessage}
                     {lockoutSeconds > 0 && (
                       <span className="block mt-1 font-mono text-sm">
-                        Time remaining: {Math.floor(lockoutSeconds / 60)}:{(lockoutSeconds % 60).toString().padStart(2, '0')}
+                        {t("auth.timeRemaining")}: {Math.floor(lockoutSeconds / 60)}:{(lockoutSeconds % 60).toString().padStart(2, '0')}
                       </span>
                     )}
                   </AlertDescription>
@@ -244,11 +246,11 @@ const Login = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder={t("auth.emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -257,11 +259,11 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={t("auth.passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -270,13 +272,13 @@ const Login = () => {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading || lockoutSeconds > 0}>
-                {loading ? "Verifying..." : lockoutSeconds > 0 ? "Temporarily Locked" : "Continue with Authenticator"}
+                {loading ? t("auth.verifying") : lockoutSeconds > 0 ? t("auth.temporarilyLocked") : t("auth.continueWithAuth")}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
-                Don't have an account?{" "}
+                {t("auth.noAccount")}{" "}
                 <Link to="/auth/register" className="text-primary hover:underline font-medium">
-                  Register here
+                  {t("auth.registerHere")}
                 </Link>
               </div>
             </form>
@@ -290,11 +292,11 @@ const Login = () => {
                 className="mb-2"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                {t("auth.back")}
               </Button>
 
               <div className="space-y-2 flex flex-col items-center">
-                <Label htmlFor="otp">Verification Code</Label>
+                <Label htmlFor="otp">{t("auth.verificationCode")}</Label>
                 <InputOTP
                   maxLength={6}
                   value={otp}
@@ -310,12 +312,12 @@ const Login = () => {
                   </InputOTPGroup>
                 </InputOTP>
                 <p className="text-sm text-muted-foreground">
-                  Enter code from Google Authenticator
+                  {t("auth.enterCodeFromApp")}
                 </p>
               </div>
 
               <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-                {loading ? "Verifying..." : "Verify & Login"}
+                {loading ? t("auth.verifying") : t("auth.verifyAndLogin")}
               </Button>
             </form>
           )}

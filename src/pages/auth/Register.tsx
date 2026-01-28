@@ -13,19 +13,10 @@ import { Stethoscope, User, UserCog, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { getUserFriendlyError, getValidationError } from "@/lib/errorHandling";
 import { authRateLimiter } from "@/lib/rateLimiting";
-
-const registerSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string(),
-  role: z.enum(["farmer", "pet_owner", "veterinarian"]),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Register = () => {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,6 +30,17 @@ const Register = () => {
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const registerSchema = z.object({
+    fullName: z.string().min(2, t("auth.nameMinLength")),
+    email: z.string().email(t("auth.invalidEmail")),
+    password: z.string().min(6, t("auth.passwordMinLength")),
+    confirmPassword: z.string(),
+    role: z.enum(["farmer", "pet_owner", "veterinarian"]),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: t("auth.passwordsNoMatch"),
+    path: ["confirmPassword"],
+  });
 
   useEffect(() => {
     const roleParam = searchParams.get("role");
@@ -81,7 +83,7 @@ const Register = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Validation Error",
+          title: t("auth.validationError"),
           description: getValidationError(error),
           variant: "destructive",
         });
@@ -121,14 +123,14 @@ const Register = () => {
 
       if (data.session) {
         toast({
-          title: "Success",
-          description: "Account created successfully!",
+          title: t("common.success"),
+          description: t("auth.accountCreated"),
         });
         navigate("/dashboard");
       }
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: getUserFriendlyError(error, "registration"),
         variant: "destructive",
       });
@@ -145,8 +147,8 @@ const Register = () => {
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
             <Stethoscope className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-          <CardDescription>Join VetConnect to access veterinary care</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t("auth.createAccount")}</CardTitle>
+          <CardDescription>{t("auth.registerSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
@@ -157,7 +159,7 @@ const Register = () => {
                   {rateLimitMessage}
                   {lockoutSeconds > 0 && (
                     <span className="block mt-1 font-mono text-sm">
-                      Time remaining: {Math.floor(lockoutSeconds / 60)}:{(lockoutSeconds % 60).toString().padStart(2, '0')}
+                      {t("auth.timeRemaining")}: {Math.floor(lockoutSeconds / 60)}:{(lockoutSeconds % 60).toString().padStart(2, '0')}
                     </span>
                   )}
                 </AlertDescription>
@@ -165,11 +167,11 @@ const Register = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">{t("auth.fullName")}</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Aaron kwesiga"
+                placeholder={t("auth.fullNamePlaceholder")}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -178,11 +180,11 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="your@email.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -191,11 +193,11 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -204,11 +206,11 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -216,29 +218,17 @@ const Register = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
-
             <div className="space-y-3">
-              <Label>I am a:</Label>
+              <Label>{t("auth.iAmA")}</Label>
               <RadioGroup value={role} onValueChange={(value: any) => setRole(value)}>
                 <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                   <RadioGroupItem value="farmer" id="farmer" />
                   <Label htmlFor="farmer" className="flex items-center gap-2 cursor-pointer flex-1">
                     <User className="h-4 w-4" />
                     <div>
-                      <div className="font-medium">Farmer / Pet Owner</div>
+                      <div className="font-medium">{t("auth.farmerPetOwner")}</div>
                       <div className="text-xs text-muted-foreground">
-                        I need veterinary consultations for my animals
+                        {t("auth.farmerDesc")}
                       </div>
                     </div>
                   </Label>
@@ -249,9 +239,9 @@ const Register = () => {
                   <Label htmlFor="veterinarian" className="flex items-center gap-2 cursor-pointer flex-1">
                     <UserCog className="h-4 w-4" />
                     <div>
-                      <div className="font-medium">Veterinarian</div>
+                      <div className="font-medium">{t("auth.veterinarian")}</div>
                       <div className="text-xs text-muted-foreground">
-                        I want to provide veterinary consultations
+                        {t("auth.vetDesc")}
                       </div>
                     </div>
                   </Label>
@@ -260,13 +250,13 @@ const Register = () => {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading || lockoutSeconds > 0}>
-              {loading ? "Creating account..." : lockoutSeconds > 0 ? "Temporarily Locked" : "Create Account"}
+              {loading ? t("auth.creatingAccount") : lockoutSeconds > 0 ? t("auth.temporarilyLocked") : t("auth.createAccount")}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t("auth.hasAccount")}{" "}
               <Link to="/auth/login" className="text-primary hover:underline font-medium">
-                Login here
+                {t("auth.loginHere")}
               </Link>
             </div>
           </form>
