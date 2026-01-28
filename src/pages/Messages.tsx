@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, User, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Consultation {
   id: string;
@@ -41,6 +42,7 @@ interface ConversationPreview {
 }
 
 const Messages = () => {
+  const { t } = useLanguage();
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -113,8 +115,8 @@ const Messages = () => {
         setConversations(conversationPreviews);
       } catch (error: any) {
         toast({
-          title: "Error",
-          description: "Failed to load conversations",
+          title: t("common.error"),
+          description: t("consultationDetail.failedToLoad"),
           variant: "destructive",
         });
       } finally {
@@ -143,7 +145,7 @@ const Messages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [navigate, toast]);
+  }, [navigate, toast, t]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -158,6 +160,11 @@ const Messages = () => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    const statusKey = `status.${status === "in_progress" ? "inProgress" : status}`;
+    return t(statusKey);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <BackgroundVideo />
@@ -165,9 +172,9 @@ const Messages = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Messages</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t("messaging.title")}</h1>
           <p className="text-muted-foreground">
-            Your consultation conversations
+            {t("messaging.subtitle")}
           </p>
         </div>
 
@@ -191,9 +198,9 @@ const Messages = () => {
           <Card>
             <CardContent className="p-8 text-center">
               <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h2 className="text-xl font-semibold mb-2">No Messages Yet</h2>
+              <h2 className="text-xl font-semibold mb-2">{t("messaging.noMessages")}</h2>
               <p className="text-muted-foreground">
-                Start a consultation to begin messaging with a veterinarian.
+                {t("messaging.noMessagesDesc")}
               </p>
             </CardContent>
           </Card>
@@ -217,10 +224,10 @@ const Messages = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="font-semibold truncate">
-                          {otherParty?.full_name || "Pending Assignment"}
+                          {otherParty?.full_name || t("messaging.pendingAssignment")}
                         </h3>
                         <Badge className={getStatusColor(consultation.status)}>
-                          {consultation.status.replace("_", " ")}
+                          {getStatusLabel(consultation.status)}
                         </Badge>
                       </div>
 
@@ -231,7 +238,7 @@ const Messages = () => {
                       {lastMessage && (
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-sm text-muted-foreground truncate flex-1">
-                            {lastMessage.sender_id === userId ? "You: " : ""}
+                            {lastMessage.sender_id === userId ? `${t("common.you")}: ` : ""}
                             {lastMessage.message}
                           </p>
                           <span className="text-xs text-muted-foreground flex items-center gap-1 ml-2">
