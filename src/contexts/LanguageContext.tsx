@@ -35,6 +35,7 @@ const translations: Record<Language, Record<string, string>> = {
     "findVets.available": "Available",
     "findVets.online": "Online Now",
     "findVets.offline": "Offline",
+    "findVets.failedToLoad": "Failed to load veterinarians",
     
     // Farmer Dashboard
     "farmerDashboard.title": "Farmer Dashboard",
@@ -275,6 +276,7 @@ const translations: Record<Language, Record<string, string>> = {
     "findVets.available": "Aliho",
     "findVets.online": "Ariho Hati",
     "findVets.offline": "Tarikuriho",
+    "findVets.failedToLoad": "Okureeba abashaaho kuremereire",
     
     // Farmer Dashboard
     "farmerDashboard.title": "Ekibaho ky'Omuhingi",
@@ -515,6 +517,7 @@ const translations: Record<Language, Record<string, string>> = {
     "findVets.available": "Ariho",
     "findVets.online": "Ariho Hati",
     "findVets.offline": "Tari kuriho",
+    "findVets.failedToLoad": "Okureeba abashaaho kuremereire",
     
     // Farmer Dashboard
     "farmerDashboard.title": "Ekibaho ky'Omuhingi",
@@ -755,6 +758,7 @@ const translations: Record<Language, Record<string, string>> = {
     "findVets.available": "Aliho",
     "findVets.online": "Aliho Hati",
     "findVets.offline": "Tarikuriho",
+    "findVets.failedToLoad": "Okureba abasawo kuremereire",
     
     // Farmer Dashboard
     "farmerDashboard.title": "Ekibaho ky'Omuhingi",
@@ -995,6 +999,7 @@ const translations: Record<Language, Record<string, string>> = {
     "findVets.available": "Aliho",
     "findVets.online": "Aliho Hati",
     "findVets.offline": "Tarikuriho",
+    "findVets.failedToLoad": "Okureba abasawo kuremereire",
     
     // Farmer Dashboard
     "farmerDashboard.title": "Ekibaho ky'Omuhingi",
@@ -1173,6 +1178,29 @@ const translations: Record<Language, Record<string, string>> = {
     "common.unnamed": "Etaine izina",
     "common.years": "emyaka",
     "common.months": "emyezi",
+    "common.you": "Iwe",
+    
+    // Messaging
+    "messaging.title": "Obubaka",
+    "messaging.subtitle": "Ebiteekateko by'okubuuza kwawe",
+    "messaging.noMessages": "Tihariho Bubaka",
+    "messaging.noMessagesDesc": "Tandika okubuuza otandike okutumirana n'omusawo.",
+    "messaging.pendingAssignment": "Nikwetekyerezebwa",
+    "messaging.consultationMessages": "Obubaka bw'Okubuuza",
+    "messaging.typeMessage": "Andika obubaka bwawe...",
+    "messaging.sendMessage": "Sindika obubaka",
+    
+    // Consultation Detail
+    "consultationDetail.requestedOn": "Kyasabwa",
+    "consultationDetail.assignedVet": "Omusawo Owakwatirizibwa",
+    "consultationDetail.description": "Ebirikukwataho",
+    "consultationDetail.symptoms": "Obumanyiso",
+    "consultationDetail.images": "Ebifaananyi",
+    "consultationDetail.back": "Garuka",
+    "consultationDetail.failedToLoad": "Kureba okubuuza kuremere",
+    "consultationDetail.diagnosis": "Okusanga Obulwaire",
+    "consultationDetail.treatmentPlan": "Entekateeka y'Obujanjabi",
+    "consultationDetail.followUpNotes": "Amakuru g'Okulondoora",
     
     // Theme
     "theme.light": "Ekitangaala",

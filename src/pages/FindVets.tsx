@@ -58,7 +58,7 @@ const FindVets = () => {
     } catch (error: any) {
       toast({
         title: t("common.error"),
-        description: "Failed to load veterinarians",
+        description: t("findVets.failedToLoad"),
         variant: "destructive",
       });
     } finally {
