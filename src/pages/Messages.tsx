@@ -4,14 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BackgroundVideo from "@/components/BackgroundVideo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, User, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatRelativeTime } from "@/lib/dateLocalization";
 
 interface Consultation {
   id: string;
@@ -42,7 +42,7 @@ interface ConversationPreview {
 }
 
 const Messages = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -243,9 +243,7 @@ const Messages = () => {
                           </p>
                           <span className="text-xs text-muted-foreground flex items-center gap-1 ml-2">
                             <Clock className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(lastMessage.created_at), {
-                              addSuffix: true,
-                            })}
+                            {formatRelativeTime(lastMessage.created_at, language)}
                           </span>
                         </div>
                       )}
