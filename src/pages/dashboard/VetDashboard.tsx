@@ -14,6 +14,7 @@ import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
 import { getUserFriendlyError } from "@/lib/errorHandling";
 import { useVetPresence } from "@/hooks/useVetPresence";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatRelativeTime } from "@/lib/dateLocalization";
 
 type Consultation = {
   id: string;
@@ -33,7 +34,7 @@ const VetDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { trackVetPresence, channel } = useVetPresence();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Track vet presence when they're on the dashboard
   useEffect(() => {
@@ -308,7 +309,7 @@ const VetDashboard = () => {
                           {consultation.description?.substring(0, 150)}...
                         </p>
                         <p className="text-xs text-muted-foreground mb-3">
-                          {t("vetDashboard.requested")}: {new Date(consultation.created_at).toLocaleDateString()}
+                          {t("vetDashboard.requested")}: {formatRelativeTime(consultation.created_at, language)}
                         </p>
                         <div className="flex gap-2">
                           <Button
@@ -353,7 +354,7 @@ const VetDashboard = () => {
                           </div>
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
-                          {t("vetDashboard.started")}: {new Date(consultation.created_at).toLocaleDateString()}
+                          {t("vetDashboard.started")}: {formatRelativeTime(consultation.created_at, language)}
                         </p>
                         <Link to={`/consultation/${consultation.id}`}>
                           <Button variant="outline" size="sm">

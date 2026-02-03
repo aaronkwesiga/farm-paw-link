@@ -11,6 +11,7 @@ import { Plus, ClipboardList, PawPrint, Loader2, AlertCircle } from "lucide-reac
 import { useToast } from "@/hooks/use-toast";
 import { getUserFriendlyError } from "@/lib/errorHandling";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatRelativeTime } from "@/lib/dateLocalization";
 
 type Consultation = {
   id: string;
@@ -34,7 +35,7 @@ const FarmerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -232,7 +233,7 @@ const FarmerDashboard = () => {
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {t("farmerDashboard.created")}: {new Date(consultation.created_at).toLocaleDateString()}
+                      {t("farmerDashboard.created")}: {formatRelativeTime(consultation.created_at, language)}
                     </p>
                     <Link to={`/consultation/${consultation.id}`}>
                       <Button variant="outline" size="sm">
