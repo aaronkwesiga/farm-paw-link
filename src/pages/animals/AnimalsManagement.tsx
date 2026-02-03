@@ -15,10 +15,11 @@ import { useToast } from "@/hooks/use-toast";
 import { PawPrint, Plus, Loader2, Trash2, Edit } from "lucide-react";
 import { z } from "zod";
 import { getValidationError } from "@/lib/errorHandling";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const animalSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  animal_type: z.enum(["cattle", "goat", "sheep", "chicken", "pig", "dog", "cat", "other"]),
+  animal_type: z.enum(["cattle", "goat", "sheep", "poultry", "pig", "dog", "cat", "other"]),
   breed: z.string().optional(),
   age_years: z.number().min(0).optional(),
   age_months: z.number().min(0).max(11).optional(),
@@ -37,6 +38,8 @@ type Animal = {
   created_at: string;
 };
 
+const ANIMAL_TYPES = ["cattle", "goat", "sheep", "poultry", "pig", "dog", "cat", "other"] as const;
+
 const AnimalsManagement = () => {
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +56,7 @@ const AnimalsManagement = () => {
   });
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchAnimals();
@@ -76,8 +80,8 @@ const AnimalsManagement = () => {
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to load animals",
+        title: t("common.error"),
+        description: t("animals.loadError"),
         variant: "destructive",
       });
     } else {
@@ -101,7 +105,7 @@ const AnimalsManagement = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Validation Error",
+          title: t("auth.validationError"),
           description: getValidationError(error),
           variant: "destructive",
         });
@@ -134,14 +138,14 @@ const AnimalsManagement = () => {
 
       if (error) {
         toast({
-          title: "Error",
-          description: "Failed to update animal",
+          title: t("common.error"),
+          description: t("animals.updateError"),
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Success",
-          description: "Animal updated successfully",
+          title: t("common.success"),
+          description: t("animals.updateSuccess"),
         });
         setDialogOpen(false);
         fetchAnimals();
@@ -152,14 +156,14 @@ const AnimalsManagement = () => {
 
       if (error) {
         toast({
-          title: "Error",
-          description: "Failed to add animal",
+          title: t("common.error"),
+          description: t("animals.addError"),
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Success",
-          description: "Animal added successfully",
+          title: t("common.success"),
+          description: t("animals.addSuccess"),
         });
         setDialogOpen(false);
         fetchAnimals();
@@ -169,20 +173,20 @@ const AnimalsManagement = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this animal?")) return;
+    if (!confirm(t("animals.confirmDelete"))) return;
 
     const { error } = await supabase.from("animals").delete().eq("id", id);
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete animal",
+        title: t("common.error"),
+        description: t("animals.deleteError"),
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Success",
-        description: "Animal deleted successfully",
+        title: t("common.success"),
+        description: t("animals.deleteSuccess"),
       });
       fetchAnimals();
     }
@@ -215,6 +219,10 @@ const AnimalsManagement = () => {
     setEditingAnimal(null);
   };
 
+  const getLocalizedAnimalType = (type: string) => {
+    return t(`animals.types.${type}`) || type;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col relative">
@@ -235,26 +243,28 @@ const AnimalsManagement = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">My Animals</h1>
-            <p className="text-muted-foreground">Manage your animal health records</p>
+            <h1 className="text-3xl font-bold mb-2">{t("animals.title")}</h1>
+            <p className="text-muted-foreground">{t("animals.subtitle")}</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Animal
+                {t("animals.addAnimal")}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingAnimal ? "Edit Animal" : "Add New Animal"}</DialogTitle>
+                <DialogTitle>
+                  {editingAnimal ? t("animals.editAnimal") : t("animals.addNewAnimal")}
+                </DialogTitle>
                 <DialogDescription>
-                  {editingAnimal ? "Update" : "Enter"} the details of the animal
+                  {editingAnimal ? t("animals.updateDetails") : t("animals.enterDetails")}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">{t("animals.name")} *</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -264,29 +274,26 @@ const AnimalsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="animal_type">Type *</Label>
+                  <Label htmlFor="animal_type">{t("animals.type")} *</Label>
                   <Select
                     value={formData.animal_type}
                     onValueChange={(value) => setFormData({ ...formData, animal_type: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select animal type" />
+                      <SelectValue placeholder={t("animals.selectType")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cattle">Cattle</SelectItem>
-                      <SelectItem value="goat">Goat</SelectItem>
-                      <SelectItem value="sheep">Sheep</SelectItem>
-                      <SelectItem value="chicken">Chicken</SelectItem>
-                      <SelectItem value="pig">Pig</SelectItem>
-                      <SelectItem value="dog">Dog</SelectItem>
-                      <SelectItem value="cat">Cat</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {ANIMAL_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {getLocalizedAnimalType(type)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="breed">Breed</Label>
+                  <Label htmlFor="breed">{t("animals.breed")}</Label>
                   <Input
                     id="breed"
                     value={formData.breed}
@@ -296,7 +303,7 @@ const AnimalsManagement = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="age_years">Age (Years)</Label>
+                    <Label htmlFor="age_years">{t("animals.ageYears")}</Label>
                     <Input
                       id="age_years"
                       type="number"
@@ -306,7 +313,7 @@ const AnimalsManagement = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="age_months">Age (Months)</Label>
+                    <Label htmlFor="age_months">{t("animals.ageMonths")}</Label>
                     <Input
                       id="age_months"
                       type="number"
@@ -319,7 +326,7 @@ const AnimalsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="weight_kg">Weight (kg)</Label>
+                  <Label htmlFor="weight_kg">{t("animals.weight")}</Label>
                   <Input
                     id="weight_kg"
                     type="number"
@@ -331,7 +338,7 @@ const AnimalsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="medical_history">Medical History</Label>
+                  <Label htmlFor="medical_history">{t("animals.medicalHistory")}</Label>
                   <Textarea
                     id="medical_history"
                     value={formData.medical_history}
@@ -341,7 +348,7 @@ const AnimalsManagement = () => {
                 </div>
 
                 <Button type="submit" className="w-full">
-                  {editingAnimal ? "Update Animal" : "Add Animal"}
+                  {editingAnimal ? t("animals.updateAnimal") : t("animals.addAnimal")}
                 </Button>
               </form>
             </DialogContent>
@@ -352,9 +359,9 @@ const AnimalsManagement = () => {
           <Card>
             <CardContent className="text-center py-12">
               <PawPrint className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No animals registered</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("animals.noAnimals")}</h3>
               <p className="text-muted-foreground mb-4">
-                Start by adding your first animal to track their health records
+                {t("animals.addFirst")}
               </p>
             </CardContent>
           </Card>
@@ -364,7 +371,7 @@ const AnimalsManagement = () => {
               <Card key={animal.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    {animal.name || "Unnamed"}
+                    {animal.name || t("common.unnamed")}
                     <div className="flex gap-2">
                       <Button
                         variant="ghost"
@@ -382,22 +389,26 @@ const AnimalsManagement = () => {
                       </Button>
                     </div>
                   </CardTitle>
-                  <CardDescription>{animal.animal_type}</CardDescription>
+                  <CardDescription>{getLocalizedAnimalType(animal.animal_type)}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 text-sm">
-                    {animal.breed && <p><strong>Breed:</strong> {animal.breed}</p>}
+                    {animal.breed && (
+                      <p><strong>{t("animals.breed")}:</strong> {animal.breed}</p>
+                    )}
                     {(animal.age_years || animal.age_months) && (
                       <p>
-                        <strong>Age:</strong>{" "}
-                        {animal.age_years ? `${animal.age_years} years ` : ""}
-                        {animal.age_months ? `${animal.age_months} months` : ""}
+                        <strong>{t("animals.age")}:</strong>{" "}
+                        {animal.age_years ? `${animal.age_years} ${t("common.years")} ` : ""}
+                        {animal.age_months ? `${animal.age_months} ${t("common.months")}` : ""}
                       </p>
                     )}
-                    {animal.weight_kg && <p><strong>Weight:</strong> {animal.weight_kg} kg</p>}
+                    {animal.weight_kg && (
+                      <p><strong>{t("animals.weight")}:</strong> {animal.weight_kg} kg</p>
+                    )}
                     {animal.medical_history && (
                       <p className="text-muted-foreground">
-                        <strong>Medical:</strong> {animal.medical_history.substring(0, 100)}
+                        <strong>{t("animals.medicalHistory")}:</strong> {animal.medical_history.substring(0, 100)}
                         {animal.medical_history.length > 100 && "..."}
                       </p>
                     )}
