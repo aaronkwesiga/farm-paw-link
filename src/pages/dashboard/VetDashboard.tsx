@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
+import { ClipboardList, CheckCircle, Clock, Loader2, AlertCircle, Briefcase } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { VetVerificationBadge } from "@/components/vet/VetVerificationBadge";
 import { getUserFriendlyError } from "@/lib/errorHandling";
@@ -230,12 +230,20 @@ const VetDashboard = () => {
               <h1 className="text-3xl font-bold mb-2">{t("vetDashboard.title")}</h1>
               <p className="text-muted-foreground">{t("vetDashboard.subtitle")}</p>
             </div>
-            {vetProfile && (
-              <VetVerificationBadge
-                licenseNumber={vetProfile.license_number}
-                specialization={vetProfile.specialization}
-              />
-            )}
+            <div className="flex items-center gap-3">
+              <Link to="/vet/portfolio">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Manage Portfolio
+                </Button>
+              </Link>
+              {vetProfile && (
+                <VetVerificationBadge
+                  licenseNumber={vetProfile.license_number}
+                  specialization={vetProfile.specialization}
+                />
+              )}
+            </div>
           </div>
         </div>
 
