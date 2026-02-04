@@ -47,14 +47,22 @@ const FindVets = () => {
 
   const fetchVets = useCallback(async () => {
     try {
+      // Use the secure function that only returns public vet data
+      // (excludes phone_number and license_number for privacy)
       const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("role", "veterinarian");
+        .rpc("get_public_vet_profiles");
 
       if (error) throw error;
-      setVets(data || []);
-      setFilteredVets(data || []);
+      
+      // Map the response to include null for sensitive fields
+      const safeVets = (data || []).map((vet: any) => ({
+        ...vet,
+        phone_number: null, // Not exposed publicly
+        license_number: null, // Not exposed publicly
+      }));
+      
+      setVets(safeVets);
+      setFilteredVets(safeVets);
     } catch (error: any) {
       toast({
         title: t("common.error"),

@@ -292,6 +292,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_vet_profiles: {
+        Args: never
+        Returns: {
+          bio: string
+          full_name: string
+          id: string
+          is_available: boolean
+          latitude: number
+          location: string
+          longitude: number
+          profile_image_url: string
+          specialization: string
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
