@@ -177,9 +177,20 @@ const VetPortfolioManage = () => {
 
   const handleImageUpload = async (itemId: string, files: FileList) => {
     try {
+      // Get user session for folder scoping (matches storage RLS policy)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "Please log in to upload images",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const urls = await uploadFiles(files, {
         bucket: "portfolio-images",
-        folder: "",
+        folder: session.user.id, // Use user ID for proper RLS policy matching
         maxFiles: 1,
       });
 
