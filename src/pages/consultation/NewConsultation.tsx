@@ -116,29 +116,44 @@ const NewConsultation = () => {
         return;
       }
 
-      let imageUrls: string[] = [];
+      // Step 1: Create consultation first (without images)
+      const { data: consultation, error: insertError } = await supabase
+        .from("consultations")
+        .insert({
+          farmer_id: session.user.id,
+          animal_id: animalId,
+          subject,
+          description,
+          symptoms: symptoms || null,
+          urgency_level: urgencyLevel,
+          status: "pending",
+        })
+        .select()
+        .single();
 
-      // Upload images if any
+      if (insertError) throw insertError;
+
+      // Step 2: Upload images with consultation_id as folder (matches RLS policy)
       if (images.length > 0) {
-        imageUrls = await uploadFiles(images, {
+        const imageUrls = await uploadFiles(images, {
           bucket: 'consultation-images',
-          folder: session.user.id,
+          folder: consultation.id, // Use consultation_id for RLS policy match
           maxFiles: 5,
         });
+
+        // Step 3: Update consultation with image URLs
+        if (imageUrls.length > 0) {
+          const { error: updateError } = await supabase
+            .from("consultations")
+            .update({ image_urls: imageUrls })
+            .eq("id", consultation.id);
+
+          if (updateError) {
+            console.error("Failed to update consultation with images:", updateError);
+            // Don't throw - consultation was created successfully
+          }
+        }
       }
-
-      const { error } = await supabase.from("consultations").insert({
-        farmer_id: session.user.id,
-        animal_id: animalId,
-        subject,
-        description,
-        symptoms: symptoms || null,
-        urgency_level: urgencyLevel,
-        image_urls: imageUrls.length > 0 ? imageUrls : null,
-        status: "pending",
-      });
-
-      if (error) throw error;
 
       toast({
         title: t("common.success"),
