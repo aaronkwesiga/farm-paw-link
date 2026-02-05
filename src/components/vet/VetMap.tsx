@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useVetPresence } from "@/hooks/useVetPresence";
 
 interface VetProfile {
   id: string;
@@ -22,9 +23,42 @@ interface VetMapProps {
 const VetMap = ({ vets, selectedVet, onSelectVet }: VetMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
+  const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isVetOnline, getOnlineVetData } = useVetPresence();
+
+  // Get live location for a vet (real-time if online, or database location)
+  const getVetLiveLocation = (vet: VetProfile) => {
+    const onlineData = getOnlineVetData(vet.user_id);
+    if (onlineData?.latitude && onlineData?.longitude) {
+      return { lat: onlineData.latitude, lng: onlineData.longitude, isLive: true };
+    }
+    if (vet.latitude !== null && vet.longitude !== null) {
+      return { lat: vet.latitude, lng: vet.longitude, isLive: false };
+    }
+    return null;
+  };
+
+  // Create marker icon based on online status and selection
+  const createMarkerIcon = (isOnline: boolean, isSelected: boolean) => {
+    let fillColor = "#6b7280"; // Gray for offline
+    if (isOnline) {
+      fillColor = "#22c55e"; // Green for online
+    }
+    if (isSelected) {
+      fillColor = "#3b82f6"; // Blue for selected
+    }
+    
+    return {
+      path: window.google.maps.SymbolPath.CIRCLE,
+      scale: isOnline ? 14 : 10,
+      fillColor,
+      fillOpacity: 1,
+      strokeColor: isOnline ? "#16a34a" : "#ffffff",
+      strokeWeight: isOnline ? 3 : 2,
+    };
+  };
 
   useEffect(() => {
     const initMap = async () => {
@@ -87,51 +121,115 @@ const VetMap = ({ vets, selectedVet, onSelectVet }: VetMapProps) => {
     initMap();
   }, []);
 
+  // Update markers when vets or online status changes
   useEffect(() => {
     if (!googleMapRef.current || isLoading || !window.google) return;
 
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    markersRef.current = [];
-
     const bounds = new window.google.maps.LatLngBounds();
     let hasValidLocation = false;
+    const currentMarkerIds = new Set<string>();
 
     vets.forEach((vet) => {
-      if (vet.latitude === null || vet.longitude === null) return;
+      const location = getVetLiveLocation(vet);
+      if (!location) return;
 
-      const position = { lat: vet.latitude, lng: vet.longitude };
+      const position = { lat: location.lat, lng: location.lng };
       bounds.extend(position);
       hasValidLocation = true;
+      currentMarkerIds.add(vet.id);
 
-      const marker = new window.google.maps.Marker({
-        map: googleMapRef.current,
-        position,
-        title: vet.full_name,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: selectedVet?.id === vet.id ? "#16a34a" : "#3b82f6",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
-        },
-      });
+      const vetIsOnline = isVetOnline(vet.user_id);
+      const isSelected = selectedVet?.id === vet.id;
+      const icon = createMarkerIcon(vetIsOnline, isSelected);
 
-      marker.addListener("click", () => onSelectVet(vet));
-      markersRef.current.push(marker);
+      // Check if marker already exists
+      const existingMarker = markersRef.current.get(vet.id);
+      
+      if (existingMarker) {
+        // Update existing marker position and icon
+        existingMarker.setPosition(position);
+        existingMarker.setIcon(icon);
+        existingMarker.setTitle(vet.full_name + (vetIsOnline ? " (Online)" : ""));
+      } else {
+        // Create new marker
+        const marker = new window.google.maps.Marker({
+          map: googleMapRef.current,
+          position,
+          title: vet.full_name + (vetIsOnline ? " (Online)" : ""),
+          icon,
+          animation: vetIsOnline ? window.google.maps.Animation.DROP : undefined,
+        });
+
+        // Add info window for live vets
+        if (vetIsOnline) {
+          const infoWindow = new window.google.maps.InfoWindow({
+            content: `
+              <div style="padding: 8px; min-width: 120px;">
+                <strong style="color: #22c55e;">● Live</strong>
+                <p style="margin: 4px 0 0 0; font-weight: 600;">${vet.full_name}</p>
+                ${vet.specialization ? `<p style="margin: 2px 0 0 0; color: #666; font-size: 12px;">${vet.specialization}</p>` : ''}
+              </div>
+            `,
+          });
+          
+          marker.addListener("mouseover", () => {
+            infoWindow.open(googleMapRef.current, marker);
+          });
+          
+          marker.addListener("mouseout", () => {
+            infoWindow.close();
+          });
+        }
+
+        marker.addListener("click", () => onSelectVet(vet));
+        markersRef.current.set(vet.id, marker);
+      }
     });
 
+    // Remove markers for vets that are no longer in the list
+    markersRef.current.forEach((marker, id) => {
+      if (!currentMarkerIds.has(id)) {
+        marker.setMap(null);
+        markersRef.current.delete(id);
+      }
+    });
+
+    // Fit bounds only on initial load or when vets change significantly
     if (hasValidLocation && vets.length > 1) {
       googleMapRef.current.fitBounds(bounds, 50);
     } else if (hasValidLocation && vets.length === 1) {
       googleMapRef.current.setCenter(bounds.getCenter());
       googleMapRef.current.setZoom(14);
     }
-  }, [vets, isLoading, selectedVet, onSelectVet]);
+  }, [vets, isLoading, onSelectVet]);
+
+  // Update marker icons when selection or online status changes (without repositioning)
+  useEffect(() => {
+    if (!googleMapRef.current || isLoading || !window.google) return;
+
+    vets.forEach((vet) => {
+      const marker = markersRef.current.get(vet.id);
+      if (marker) {
+        const vetIsOnline = isVetOnline(vet.user_id);
+        const isSelected = selectedVet?.id === vet.id;
+        marker.setIcon(createMarkerIcon(vetIsOnline, isSelected));
+        
+        // Update position from live data
+        const location = getVetLiveLocation(vet);
+        if (location) {
+          marker.setPosition({ lat: location.lat, lng: location.lng });
+        }
+      }
+    });
+  }, [selectedVet, isVetOnline, getOnlineVetData, vets, isLoading]);
 
   useEffect(() => {
-    if (!googleMapRef.current || !selectedVet?.latitude || !selectedVet?.longitude) return;
-    googleMapRef.current.panTo({ lat: selectedVet.latitude, lng: selectedVet.longitude });
+    if (!googleMapRef.current || !selectedVet) return;
+    
+    const location = getVetLiveLocation(selectedVet);
+    if (!location) return;
+    
+    googleMapRef.current.panTo({ lat: location.lat, lng: location.lng });
     googleMapRef.current.setZoom(14);
   }, [selectedVet]);
 
