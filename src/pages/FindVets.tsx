@@ -144,10 +144,16 @@ const FindVets = () => {
           {/* Map Section */}
           <Card className="order-2 lg:order-1">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                {t("findVets.vetLocations")}
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  {t("findVets.vetLocations")}
+                </CardTitle>
+                <Badge variant="outline" className="bg-success/10 text-success border-success/30 animate-pulse">
+                  <span className="inline-block w-2 h-2 rounded-full bg-success mr-1.5"></span>
+                  LIVE
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent>
               <VetMap
