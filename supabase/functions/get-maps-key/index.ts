@@ -23,14 +23,17 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    // Extract the token from the Authorization header
+    const token = authHeader.replace('Bearer ', '');
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Validate the user session
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Validate the user session - MUST pass token explicitly when verify_jwt = false
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
       console.error("Invalid authentication token:", userError);
