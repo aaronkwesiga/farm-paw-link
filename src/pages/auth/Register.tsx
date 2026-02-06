@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Stethoscope, User, UserCog, AlertTriangle } from "lucide-react";
+import { Stethoscope, User, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { getUserFriendlyError, getValidationError } from "@/lib/errorHandling";
 import { authRateLimiter } from "@/lib/rateLimiting";
@@ -22,8 +22,8 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<"farmer" | "pet_owner" | "veterinarian">(
-    (searchParams.get("role") as any) || "farmer"
+  const [role, setRole] = useState<"farmer" | "pet_owner">(
+    searchParams.get("role") === "pet_owner" ? "pet_owner" : "farmer"
   );
   const [loading, setLoading] = useState(false);
   const [rateLimitMessage, setRateLimitMessage] = useState("");
@@ -36,7 +36,7 @@ const Register = () => {
     email: z.string().email(t("auth.invalidEmail")),
     password: z.string().min(6, t("auth.passwordMinLength")),
     confirmPassword: z.string(),
-    role: z.enum(["farmer", "pet_owner", "veterinarian"]),
+    role: z.enum(["farmer", "pet_owner"]),
   }).refine((data) => data.password === data.confirmPassword, {
     message: t("auth.passwordsNoMatch"),
     path: ["confirmPassword"],
@@ -44,8 +44,8 @@ const Register = () => {
 
   useEffect(() => {
     const roleParam = searchParams.get("role");
-    if (roleParam === "veterinarian") {
-      setRole("veterinarian");
+    if (roleParam === "pet_owner") {
+      setRole("pet_owner");
     }
   }, [searchParams]);
 
@@ -220,7 +220,7 @@ const Register = () => {
 
             <div className="space-y-3">
               <Label>{t("auth.iAmA")}</Label>
-              <RadioGroup value={role} onValueChange={(value: any) => setRole(value)}>
+              <RadioGroup value={role} onValueChange={(value: "farmer" | "pet_owner") => setRole(value)}>
                 <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                   <RadioGroupItem value="farmer" id="farmer" />
                   <Label htmlFor="farmer" className="flex items-center gap-2 cursor-pointer flex-1">
@@ -233,20 +233,10 @@ const Register = () => {
                     </div>
                   </Label>
                 </div>
-
-                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="veterinarian" id="veterinarian" />
-                  <Label htmlFor="veterinarian" className="flex items-center gap-2 cursor-pointer flex-1">
-                    <UserCog className="h-4 w-4" />
-                    <div>
-                      <div className="font-medium">{t("auth.veterinarian")}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {t("auth.vetDesc")}
-                      </div>
-                    </div>
-                  </Label>
-                </div>
               </RadioGroup>
+              <p className="text-xs text-muted-foreground mt-2">
+                {t("auth.vetRegistrationNote") || "Veterinarian accounts require admin verification. Please contact support after registration to request veterinarian access."}
+              </p>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading || lockoutSeconds > 0}>
