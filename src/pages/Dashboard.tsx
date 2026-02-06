@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BackgroundVideo from "@/components/BackgroundVideo";
 import { Loader2 } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -38,7 +39,7 @@ const Dashboard = () => {
           }
         }
       } catch (error) {
-        console.error("Error checking user:", error);
+        logger.error("Error checking user:", error);
         navigate("/auth/login");
       } finally {
         setLoading(false);

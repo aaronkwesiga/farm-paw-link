@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useVetPresence } from "@/hooks/useVetPresence";
+import { logger } from "@/lib/logger";
 
 interface VetProfile {
   id: string;
@@ -67,7 +68,7 @@ const VetMap = ({ vets, selectedVet, onSelectVet }: VetMapProps) => {
         const { data, error: fetchError } = await supabase.functions.invoke('get-maps-key');
         
         if (fetchError || !data?.apiKey) {
-          console.error("Failed to fetch Maps API key:", fetchError);
+          logger.error("Failed to fetch Maps API key:", fetchError);
           setError("Google Maps API key not configured");
           setIsLoading(false);
           return;
@@ -91,7 +92,7 @@ const VetMap = ({ vets, selectedVet, onSelectVet }: VetMapProps) => {
           createMap();
         }
       } catch (err) {
-        console.error("Error initializing map:", err);
+        logger.error("Error initializing map:", err);
         setError("Failed to initialize map");
         setIsLoading(false);
       }

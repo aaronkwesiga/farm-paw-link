@@ -96,7 +96,9 @@ export function getUserFriendlyError(error: any, context?: string): string {
     },
   };
   
-  console.error('Application error:', errorLog);
+  if (import.meta.env.DEV) {
+    console.error('Application error:', errorLog);
+  }
   
   // Return early for null/undefined
   if (!error) {
