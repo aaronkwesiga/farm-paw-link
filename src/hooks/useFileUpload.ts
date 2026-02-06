@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorHandling';
+import { logger } from '@/lib/logger';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -99,7 +100,7 @@ export const useFileUpload = () => {
           });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          logger.error('Upload error:', uploadError);
           toast({
             title: 'Upload failed',
             description: `Failed to upload ${file.name}`,
@@ -114,7 +115,7 @@ export const useFileUpload = () => {
           .createSignedUrl(filePath, 3600);
 
         if (urlError || !signedUrlData) {
-          console.error('URL error:', urlError);
+          logger.error('URL error:', urlError);
           continue;
         }
 

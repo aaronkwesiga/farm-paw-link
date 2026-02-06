@@ -15,6 +15,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, Upload } from "lucide-react";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const consultationSchema = z.object({
   subject: z.string().min(5, "Subject must be at least 5 characters"),
@@ -149,7 +150,7 @@ const NewConsultation = () => {
             .eq("id", consultation.id);
 
           if (updateError) {
-            console.error("Failed to update consultation with images:", updateError);
+            logger.error("Failed to update consultation with images:", updateError);
             // Don't throw - consultation was created successfully
           }
         }

@@ -37,7 +37,7 @@ const ChartContainer = React.forwardRef<
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+  const chartId = `chart-${(id || uniqueId).replace(/[^a-zA-Z0-9-_]/g, "")}`;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -58,12 +58,31 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+/**
+ * SECURITY: This component uses dangerouslySetInnerHTML for dynamic CSS.
+ * Chart IDs and config keys are sanitized to prevent CSS injection.
+ * Never pass unsanitized user-controlled data to chart config.
+ */
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
+  const colorConfig = Object.entries(config).filter(
+    ([key, cfg]) => {
+      // Validate config keys - only allow safe characters
+      if (!/^[a-zA-Z0-9-_]+$/.test(key)) return false;
+      return cfg.theme || cfg.color;
+    }
+  );
 
   if (!colorConfig.length) {
     return null;
   }
+
+  // Validate color values to prevent CSS injection
+  const isValidColor = (color: string): boolean => {
+    return /^(#[0-9A-Fa-f]{3,8}|rgba?\([0-9.,\s%]+\)|hsla?\([0-9.,\s%deg]+\)|[a-zA-Z]+)$/.test(color);
+  };
+
+  // Sanitize the chart ID
+  const safeId = id.replace(/[^a-zA-Z0-9-_]/g, "");
 
   return (
     <style
@@ -71,11 +90,11 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${safeId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    return color && isValidColor(color) ? `  --color-${key}: ${color};` : null;
   })
   .join("\n")}
 }
