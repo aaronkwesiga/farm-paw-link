@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,36 +12,6 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify authentication - require a valid user session
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error("Missing or invalid Authorization header");
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Extract the token from the Authorization header
-    const token = authHeader.replace('Bearer ', '');
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    // Validate the user session - MUST pass token explicitly when verify_jwt = false
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !user) {
-      console.error("Invalid authentication token:", userError);
-      return new Response(
-        JSON.stringify({ error: "Invalid authentication" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
     const apiKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
     
     if (!apiKey) {
@@ -53,7 +22,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Returning Google Maps API key for user:", user.id);
+    console.log("Returning Google Maps API key");
     return new Response(
       JSON.stringify({ apiKey }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
